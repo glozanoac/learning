@@ -1,0 +1,125 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newtheorem*{claim}{Claim}
+\theoremstyle{remark}
+\newtheorem*{example}{Example}
+\newtheorem*{remark}{Remark}
+
+\title{Theorem 2.3, (b) $\Rightarrow$ (c): extreme point $\Rightarrow$ basic feasible solution}
+\author{}
+\date{Based on Theorem 2.3 (Section 2.2) of Bertsimas and Tsitsiklis~\cite{BT97}}
+
+\begin{document}
+\maketitle
+
+\paragraph{Source.} This note expands the proof of (b) $\Rightarrow$ (c) in Theorem~2.3 of \cite[Section~2.2]{BT97}. Definition~2.9, Theorem~2.2 and Figure~2.6 below refer to the same book.
+
+\paragraph{Setting.}
+Let $P\subset\mathbb{R}^n$ be a polyhedron described by finitely many constraints
+\[
+\mathbf a_i'\mathbf x \ge b_i \quad (i\in M_1), \qquad
+\mathbf a_i'\mathbf x = b_i \quad (i\in M_2),
+\]
+where a constraint $\le$ is rewritten as $\ge$ by multiplying by $-1$. For $\mathbf x^*\in P$ let
+\[
+I=\{\, i : \mathbf a_i'\mathbf x^* = b_i \,\}
+\]
+be the set of constraints active at $\mathbf x^*$. Note $M_2\subseteq I$ because $\mathbf x^*$ is feasible.
+
+\begin{claim}
+If $\mathbf x^*\in P$ is an extreme point of $P$, then $\mathbf x^*$ is a basic feasible solution.
+\end{claim}
+
+\section*{Strategy: contrapositive}
+We prove the equivalent statement: \emph{if $\mathbf x^*\in P$ is not a basic feasible solution, then $\mathbf x^*$ is not an extreme point.}
+
+To show $\mathbf x^*$ is not extreme, by definition we must exhibit $\mathbf y,\mathbf z\in P$, both different from $\mathbf x^*$, and $\lambda\in[0,1]$ with $\mathbf x^*=\lambda\mathbf y+(1-\lambda)\mathbf z$. We will build $\mathbf y=\mathbf x^*+\epsilon\mathbf d$ and $\mathbf z=\mathbf x^*-\epsilon\mathbf d$, so that $\mathbf x^*$ is their midpoint ($\lambda=1/2$). The whole proof is about finding a direction $\mathbf d$ and a step $\epsilon$ that keep both points inside $P$.
+
+\section*{Step 1: what ``not basic feasible'' means}
+Since $\mathbf x^*\in P$, it satisfies every constraint, so condition (i) of Definition~2.9 in \cite{BT97} (all equality constraints active) holds automatically, and $\mathbf x^*$ is feasible. Hence the only way $\mathbf x^*$ can fail to be a basic feasible solution is that condition (ii) fails:
+\[
+\text{among } \{\mathbf a_i : i\in I\} \text{ there are fewer than } n \text{ linearly independent vectors.}
+\]
+By Theorem~2.2 of \cite{BT97}, this is equivalent to
+\[
+S:=\operatorname{span}\{\mathbf a_i : i\in I\}\ \subsetneq\ \mathbb{R}^n .
+\]
+
+\section*{Step 2: a direction that does not move the active constraints}
+Since $S$ is a proper subspace, $\dim S<n$, hence $\dim S^{\perp}=n-\dim S\ge 1$ and there is $\mathbf d\neq\mathbf 0$ with $\mathbf d\in S^\perp$, i.e.
+\[
+\mathbf a_i'\mathbf d = 0 \qquad \text{for all } i\in I .
+\]
+Equivalently: the matrix $A_I$ whose rows are $\mathbf a_i'$, $i\in I$, has rank $<n$, so its null space is nontrivial.
+
+Interpretation: moving from $\mathbf x^*$ along $\pm\mathbf d$ does not change the value of any active constraint. Indeed, for every $\epsilon\in\mathbb{R}$ and $i\in I$,
+\[
+\mathbf a_i'(\mathbf x^*\pm\epsilon\mathbf d)=\mathbf a_i'\mathbf x^*\pm\epsilon\,\mathbf a_i'\mathbf d = b_i .
+\]
+So every active constraint (in particular every equality constraint) remains satisfied, with equality, at both $\mathbf y$ and $\mathbf z$, \emph{no matter how large} $\epsilon$ is.
+
+\section*{Step 3: the inactive constraints, and why $\epsilon$ must be small}
+For $i\notin I$ the constraint is an inequality with strict slack
+\[
+s_i := \mathbf a_i'\mathbf x^* - b_i > 0 .
+\]
+Moving along $\pm\mathbf d$ changes the left-hand side by $\pm\epsilon\,\mathbf a_i'\mathbf d$, which could be negative, so we must not move too far. For any $\epsilon>0$,
+\[
+\mathbf a_i'(\mathbf x^*\pm\epsilon\mathbf d) = \mathbf a_i'\mathbf x^* \pm \epsilon\,\mathbf a_i'\mathbf d
+\ \ge\ \mathbf a_i'\mathbf x^* - \epsilon\,|\mathbf a_i'\mathbf d| .
+\]
+Therefore, if
+\begin{equation}\label{eq:eps}
+\epsilon\,|\mathbf a_i'\mathbf d| < \mathbf a_i'\mathbf x^* - b_i = s_i \qquad \text{for all } i\notin I,
+\end{equation}
+then $\mathbf a_i'(\mathbf x^*\pm\epsilon\mathbf d) > b_i$ for all $i\notin I$.
+
+Such an $\epsilon>0$ exists. If $\mathbf a_i'\mathbf d=0$, condition \eqref{eq:eps} holds for every $\epsilon>0$ since $s_i>0$. Let $J=\{i\notin I : \mathbf a_i'\mathbf d\neq 0\}$. If $J=\emptyset$, any $\epsilon>0$ works. Otherwise $J$ is \emph{finite} (a polyhedron has finitely many constraints), so
+\[
+\epsilon := \tfrac12 \min_{i\in J} \frac{s_i}{|\mathbf a_i'\mathbf d|} > 0
+\]
+is a minimum of finitely many positive numbers, hence positive, and it satisfies \eqref{eq:eps}. Finiteness is essential here: with infinitely many constraints the infimum of the ratios could be $0$.
+
+\section*{Step 4: conclusion}
+With this $\epsilon$, set $\mathbf y=\mathbf x^*+\epsilon\mathbf d$ and $\mathbf z=\mathbf x^*-\epsilon\mathbf d$.
+\begin{itemize}
+  \item By Step 2, $\mathbf y$ and $\mathbf z$ satisfy every constraint $i\in I$ (with equality).
+  \item By Step 3, $\mathbf y$ and $\mathbf z$ satisfy every constraint $i\notin I$ (strictly).
+\end{itemize}
+Hence $\mathbf y,\mathbf z\in P$. Since $\epsilon>0$ and $\mathbf d\ne\mathbf 0$, we have $\mathbf y\neq\mathbf x^*$ and $\mathbf z\neq\mathbf x^*$. Finally
+\[
+\tfrac12\mathbf y+\tfrac12\mathbf z = \tfrac12(\mathbf x^*+\epsilon\mathbf d)+\tfrac12(\mathbf x^*-\epsilon\mathbf d)=\mathbf x^*,
+\]
+so $\mathbf x^*$ is a convex combination (with $\lambda=1/2$) of two points of $P$ different from it. Therefore $\mathbf x^*$ is not an extreme point. This proves the contrapositive, and hence (b) $\Rightarrow$ (c). \qed
+
+\section*{The proof on the example of Figure 2.6 of \cite{BT97}}
+\begin{example}
+$P=\{\mathbf x\in\mathbb{R}^3 : x_1+x_2+x_3=1,\ x_1,x_2,x_3\ge 0\}$, and $E=(x_1^*,0,x_3^*)$ with $x_1^*,x_3^*>0$.
+
+\emph{Step 1.} Active set: $I=\{x_1+x_2+x_3=1,\ x_2\ge 0\}$ with vectors $(1,1,1)$ and $(0,1,0)$. Only $2<3$ independent vectors, so $E$ is not basic and $S$ is a plane in $\mathbb{R}^3$.
+
+\emph{Step 2.} $S^\perp$ is the line spanned by $\mathbf d=(1,0,-1)$: indeed $(1,1,1)\cdot\mathbf d=0$ and $(0,1,0)\cdot\mathbf d=0$. Moving along $\pm\mathbf d$ keeps $x_1+x_2+x_3=1$ and $x_2=0$; geometrically, we slide along the edge $AB$.
+
+\emph{Step 3.} Inactive constraints: $x_1\ge0$ with $\mathbf a=(1,0,0)$, slack $s=x_1^*$, $|\mathbf a'\mathbf d|=1$; and $x_3\ge0$ with $\mathbf a=(0,0,1)$, slack $s=x_3^*$, $|\mathbf a'\mathbf d|=1$. So we need $\epsilon<\min\{x_1^*,x_3^*\}$: this is exactly the condition for not crossing past $B$ (where $x_3$ would become negative) or past $A$ (where $x_1$ would become negative).
+
+\emph{Step 4.} $\mathbf y=(x_1^*+\epsilon,\,0,\,x_3^*-\epsilon)$ and $\mathbf z=(x_1^*-\epsilon,\,0,\,x_3^*+\epsilon)$ lie on the segment $AB$, inside $P$, and $E$ is their midpoint. So $E$ is not extreme.
+\end{example}
+
+\begin{example}[Why the argument fails at a basic feasible solution]
+At $A=(0,0,1)$, $I$ contains $(1,1,1)$, $(1,0,0)$, $(0,1,0)$, which span $\mathbb{R}^3$. Then $S^\perp=\{\mathbf 0\}$: the only $\mathbf d$ with $\mathbf a_i'\mathbf d=0$ for all $i\in I$ is $\mathbf d=\mathbf 0$, so Step 2 cannot produce a direction and $\mathbf y=\mathbf z=A$. Any nonzero direction changes some active constraint, so one of $A\pm\epsilon\mathbf d$ violates it (e.g.\ $\mathbf d=(1,-1,0)$ keeps the equality but $A-\epsilon\mathbf d$ has $x_1=-\epsilon<0$).
+\end{example}
+
+\begin{remark}[Summary of the idea]
+Not basic $\Rightarrow$ the active constraints leave a free direction $\mathbf d$ (Step 2). Along $\pm\mathbf d$ the active constraints never break, and the inactive ones have positive slack, so a small enough step keeps both $\mathbf x^*\pm\epsilon\mathbf d$ feasible (Step 3). Then $\mathbf x^*$ is the midpoint of a segment in $P$, i.e.\ not extreme.
+\end{remark}
+
+\begin{thebibliography}{9}
+\bibitem{BT97}
+D.~Bertsimas and J.~N.~Tsitsiklis,
+\emph{Introduction to Linear Optimization},
+Athena Scientific, Belmont, MA, 1997.
+\end{thebibliography}
+
+\end{document}
