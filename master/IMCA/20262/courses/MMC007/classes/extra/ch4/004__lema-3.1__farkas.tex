@@ -1,0 +1,87 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=2.5cm]{geometry}
+\renewcommand{\proofname}{Demostraci\'on}
+
+\newtheorem{lema}{Lema}[section]
+\renewcommand{\thesection}{3}
+\setcounter{section}{3}
+\setcounter{lema}{0}
+
+\begin{document}
+
+\section*{3.1. El Lema de Farkas}
+
+\begin{lema}[Lema de Alternativas de Farkas]
+Sean $A\in\mathbb{R}^{m\times n}$, $B\in\mathbb{R}^{q\times n}$ y $c\in\mathbb{R}^n$. Las siguientes condiciones son equivalentes:
+\begin{enumerate}
+  \item[\textup{(i)}] $Ad\le 0$, $Bd=0$ implica $c^Td\ge 0$.
+  \item[\textup{(ii)}] Existen $u\in\mathbb{R}^m$, $v\in\mathbb{R}^q$ tales que $u\ge 0$ y $c+A^Tu+B^Tv=0$.
+\end{enumerate}
+\end{lema}
+
+\begin{proof}
+\textbf{(ii) $\Rightarrow$ (i).}
+Sean $u\ge 0$ y $v$ tales que $c=-A^Tu-B^Tv$, y sea $d\in\mathbb{R}^n$ con $Ad\le 0$ y $Bd=0$. Entonces
+\[
+c^Td=-u^T(Ad)-v^T(Bd)=-u^T(Ad)=-\sum_{i=1}^m u_i\,(Ad)_i .
+\]
+Cada sumando cumple $u_i\ge 0$ y $(Ad)_i\le 0$, luego $u_i(Ad)_i\le 0$ y por tanto $c^Td\ge 0$.
+
+\medskip
+\textbf{(i) $\Rightarrow$ (ii).}
+Procedemos por contrarrecíproco: suponemos que (ii) es falsa y construimos $d$ con $Ad\le 0$, $Bd=0$ y $c^Td<0$.
+
+Definimos
+\[
+K=\{A^Tu+B^Tv:\ u\in\mathbb{R}^m,\ u\ge 0,\ v\in\mathbb{R}^q\}\subseteq\mathbb{R}^n .
+\]
+Que (ii) sea falsa significa exactamente que $y:=-c\notin K$.
+
+\emph{Paso 1: $K$ es un cono convexo cerrado y no vacío.}
+Sean $a_1,\dots,a_m$ las filas de $A$ y $b_1,\dots,b_q$ las filas de $B$ (vistas como vectores de $\mathbb{R}^n$). Todo $v\in\mathbb{R}^q$ se escribe $v=v^+-v^-$ con $v^+,v^-\ge 0$, de modo que
+\[
+A^Tu+B^Tv=\sum_{i=1}^m u_i a_i+\sum_{j=1}^q v^+_j b_j+\sum_{j=1}^q v^-_j(-b_j),
+\]
+y recíprocamente toda combinación no negativa de $a_1,\dots,a_m,b_1,\dots,b_q,-b_1,\dots,-b_q$ es de esa forma (tomando $v=v^+-v^-$). Así,
+\[
+K=\operatorname{cone}\{a_1,\dots,a_m,\,b_1,\dots,b_q,\,-b_1,\dots,-b_q\},
+\]
+es decir, $K$ es un cono finitamente generado. En particular $K$ es convexo, $0\in K$, y $\lambda k\in K$ para todo $k\in K$, $\lambda\ge 0$. Por el teorema de que \emph{todo cono finitamente generado es cerrado} (consecuencia del Lema de Carathéodory para conos), $K$ es cerrado.
+
+\emph{Paso 2: proyección de $y$ sobre $K$.}
+Por el Teorema de Proyección sobre conjuntos convexos cerrados no vacíos, existe un único $p\in K$ tal que $\|y-p\|\le\|y-k\|$ para todo $k\in K$, y este $p$ satisface
+\begin{equation}\label{eq:vi}
+(y-p)^T(k-p)\le 0\qquad\text{para todo }k\in K.
+\end{equation}
+Como $y\notin K$ y $p\in K$, se tiene $p\neq y$. Definimos
+\[
+d:=y-p\neq 0 .
+\]
+
+\emph{Paso 3: $d^Tp=0$ y $d^Tk\le 0$ para todo $k\in K$.}
+Como $K$ es un cono, $0\in K$ y $2p\in K$. Tomando $k=0$ en \eqref{eq:vi} se obtiene $-d^Tp\le 0$, y tomando $k=2p$ se obtiene $d^Tp\le 0$. Luego $d^Tp=0$. Sustituyendo en \eqref{eq:vi},
+\begin{equation}\label{eq:polar}
+d^Tk\le d^Tp=0\qquad\text{para todo }k\in K.
+\end{equation}
+
+\emph{Paso 4: $Ad\le 0$ y $Bd=0$.}
+Para $i\in\{1,\dots,m\}$, tomando $u=e_i\ge 0$ y $v=0$ se tiene $a_i=A^Te_i\in K$, y \eqref{eq:polar} da $(Ad)_i=a_i^Td\le 0$. Por tanto $Ad\le 0$.
+Para $j\in\{1,\dots,q\}$, tomando $u=0$ y $v=\pm e_j$ se tiene $\pm b_j=B^T(\pm e_j)\in K$, y \eqref{eq:polar} da $b_j^Td\le 0$ y $-b_j^Td\le 0$, es decir $(Bd)_j=b_j^Td=0$. Por tanto $Bd=0$.
+
+\emph{Paso 5: $c^Td<0$.}
+Usando $d^Tp=0$,
+\[
+d^Ty=d^T(y-p)+d^Tp=\|d\|^2>0,
+\]
+pues $d\neq 0$. Como $y=-c$, esto es $c^Td=-d^Ty=-\|d\|^2<0$.
+
+Los pasos 4 y 5 muestran que $d$ satisface $Ad\le 0$ y $Bd=0$ pero $c^Td<0$, de modo que (i) es falsa. Esto prueba que si (i) es verdadera, entonces (ii) es verdadera.
+\end{proof}
+
+\paragraph{Observación (papel de la cerradura de $K$).}
+El único punto donde se usa la estructura finita de $A$ y $B$ es el Paso~1. Si $K$ fuera un cono convexo no cerrado, la proyección del Paso~2 podría no existir y el argumento fallaría: por ejemplo, en $\mathbb{R}^2$ el cono convexo $K'=\{(x_1,x_2): x_2>0\}\cup\{(0,0)\}$ no contiene a $y=(1,0)$, pero no existe $d$ con $d^Tk\le 0$ para todo $k\in K'$ y $d^Ty>0$: la condición sobre $K'$ fuerza $d=(0,-t)$ con $t\ge 0$, y entonces $d^Ty=0$. Es la cerradura de los conos finitamente generados la que garantiza la alternativa.
+
+\end{document}

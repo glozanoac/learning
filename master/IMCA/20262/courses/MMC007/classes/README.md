@@ -1,1 +1,1 @@
-`extra` contains complementary resources (parts or complete proof) to understand an specific hypothesis of the lessons
+`extra` contains complementary resources (partial or complete proofs) to understand an specific hypothesis of the lessons
