@@ -1,0 +1,85 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=2.5cm]{geometry}
+\renewcommand{\proofname}{Demostración}
+
+\newtheorem*{lema}{Afirmación (Subcaso 2b)}
+\newtheorem*{obs}{Observación}
+
+\begin{document}
+
+\section*{Proposición 4.1, Subcaso 2b}
+
+\paragraph{Contexto.} El modelo cuadrático es
+\[
+m_k(p) = f_k + g_k^\top p + \tfrac12 p^\top B_k p ,
+\]
+con $g_k \neq 0$, y el punto de Cauchy es $p_k^C = -\alpha_k^C g_k$, donde
+$\alpha_k^C$ minimiza $m_k(-\alpha g_k)$ sobre $0 \le \alpha \le \Delta_k/\|g_k\|$.
+Definimos
+\[
+\varphi(\alpha) := m_k(-\alpha g_k) = f_k - \alpha \|g_k\|^2 + \tfrac12 \alpha^2\, g_k^\top B_k g_k .
+\]
+El Caso 2 es $g_k^\top B_k g_k > 0$; entonces $\varphi$ es una parábola estrictamente convexa con
+minimizador irrestricto
+\[
+\alpha^* = \frac{\|g_k\|^2}{g_k^\top B_k g_k} > 0 .
+\]
+
+\begin{lema}
+Si $g_k^\top B_k g_k > 0$ y $\alpha^* > \Delta_k/\|g_k\|$, entonces
+$\alpha_k^C = \Delta_k/\|g_k\|$ y
+\[
+m_k(0) - m_k(p_k^C) \ \ge\ \tfrac12 \|g_k\|\,\Delta_k .
+\]
+\end{lema}
+
+\begin{proof}
+\textbf{Paso 1: $\alpha_k^C = \Delta_k/\|g_k\|$.}
+Como $\varphi'(\alpha) = -\|g_k\|^2 + \alpha\, g_k^\top B_k g_k$ y $g_k^\top B_k g_k>0$,
+se tiene $\varphi'(\alpha) < 0$ para todo $\alpha < \alpha^*$. Luego $\varphi$ es estrictamente
+decreciente en $[0,\alpha^*]$. Como el intervalo factible $[0, \Delta_k/\|g_k\|]$ está contenido en
+$[0,\alpha^*]$ (por hipótesis $\Delta_k/\|g_k\| < \alpha^*$), el mínimo de $\varphi$ sobre él
+se alcanza en el extremo derecho: $\alpha_k^C = \Delta_k/\|g_k\|$.
+
+\textbf{Paso 2: cota del decrecimiento.}
+Para cualquier $\alpha \in [0,\alpha^*]$,
+\[
+\varphi(0) - \varphi(\alpha) = \alpha \|g_k\|^2 - \tfrac12 \alpha^2\, g_k^\top B_k g_k .
+\]
+Como $0 \le \alpha \le \alpha^*$ y $g_k^\top B_k g_k > 0$,
+\[
+\tfrac12 \alpha^2\, g_k^\top B_k g_k \ \le\ \tfrac12 \alpha\, \alpha^*\, g_k^\top B_k g_k
+= \tfrac12 \alpha \|g_k\|^2 ,
+\]
+usando $\alpha^* g_k^\top B_k g_k = \|g_k\|^2$. Por lo tanto
+\[
+\varphi(0) - \varphi(\alpha) \ \ge\ \alpha\|g_k\|^2 - \tfrac12 \alpha\|g_k\|^2 = \tfrac12 \alpha \|g_k\|^2 .
+\tag{$\ast$}
+\]
+
+\textbf{Paso 3: conclusión.}
+Aplicando $(\ast)$ con $\alpha = \alpha_k^C = \Delta_k/\|g_k\| \in [0,\alpha^*]$, y notando que
+$\varphi(0)=m_k(0)$, $\varphi(\alpha_k^C) = m_k(p_k^C)$:
+\[
+m_k(0) - m_k(p_k^C) \ \ge\ \tfrac12 \cdot \frac{\Delta_k}{\|g_k\|}\cdot \|g_k\|^2
+= \tfrac12 \|g_k\|\,\Delta_k .
+\]
+Finalmente, como $\Delta_k \ge \min\!\left(\Delta_k, \|g_k\|/\|B_k\|\right)$, esto implica la
+desigualdad (13) en este subcaso.
+\end{proof}
+
+\begin{obs}[Interpretación de ``la pendiente domina'']
+La desigualdad $(\ast)$ dice que, mientras no se pase de $\alpha^*$, el decrecimiento real es al
+menos la mitad del decrecimiento lineal predicho por la pendiente en el origen,
+$-\varphi'(0)\,\alpha = \alpha\|g_k\|^2$. En efecto, el cociente entre el término de curvatura
+y el término lineal es
+\[
+\frac{\tfrac12\alpha^2\, g_k^\top B_k g_k}{\alpha\|g_k\|^2} = \frac{\alpha}{2\alpha^*} \ \le\ \frac12
+\qquad (0<\alpha\le\alpha^*).
+\]
+\end{obs}
+
+\end{document}
