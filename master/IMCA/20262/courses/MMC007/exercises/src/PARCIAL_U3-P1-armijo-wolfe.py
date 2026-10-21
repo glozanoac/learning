@@ -4,9 +4,10 @@
 # Objective:
 #   Computation of step size that satisfy Armijo condition for an step of the iteration
 #
-# Context (in step k):
-# Our intention is to find an 'alpha', such that f(xk + alpha*pk) <= f(xk) + c1*alpha*df(xk)@pk
-# where: pk= search direction at step k, xk=point of sucession at step k, df(xk)= gradient of f at point xk
+# Context:
+#Given and direction search $p_k$ and an **adecuated** $\alpha_k$, the sucession $x_{k+1} = x_k + \alpha_k p_k$ converges to an stationary point of $f$ if $p_k$ is a descent direction ($\nabla f(x_k) p_k < 0$) and the $\alpha_k$ are *adecuated* (Armijo + Wolfe conditions) selected in each step. (more details in: **Zoutendijk Theorem**)
+#
+#If the funtion $f$ is more conditioned (e.g. convex), then this **stationary point** could be a *minimum*.
 #
 # for the given function: f(x1, x2) = 10*x1**2 + x2**2
 #
