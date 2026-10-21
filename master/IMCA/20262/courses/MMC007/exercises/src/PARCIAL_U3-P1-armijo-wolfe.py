@@ -19,7 +19,7 @@
 #
 #
 # [PART2]
-# Is the computed step also satisfy weak and strong wolf conditions?
+# Would the calculated step also satisfy the weak and strong Wolfe conditions?
 # 
 # Let's compute weak and strong wolf acceptance interval
 # weak wolf = [alpha_WW, alpha_A]
@@ -54,8 +54,8 @@ while f(x + alpha*p) > f(x) + c1*alpha*s:
 
     print(f"alpha={alpha}, left={f(x + alpha*p)}, right={f(x) + c1*alpha*s}, armijo interval ={[0, alpha_A]}, isin={0 <= alpha and  alpha <= alpha_A}")
 
-
-print("\n\n")
+print("\n" + "="*30)
+print("Would the calculated step also satisfy the weak and strong Wolfe conditions?")
 for c2 in [0.1, 0.9]:
 
     #alpha_A = (404*(1-c1))/4004
