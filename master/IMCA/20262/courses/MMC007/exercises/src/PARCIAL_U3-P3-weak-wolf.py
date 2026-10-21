@@ -15,7 +15,9 @@ x = np.array([1, 1]) # x0: point on sucession (k=0)
 p = -df(x) # search direction (descent one)
 c1 = 1e-4
 c2 = 0.9
-alpha = 1e-3 # initial guess
+# alpha = 1 # too large (violate armijo conditions)
+# alpha = 1e-3 # too small (violate weak wolfe conditions)
+alpha = 1 # initial guess
 
 # since p = -df(x) and g = df(x), then s= g @ p = = -p @ p = -||p||^2
 s = -np.linalg.norm(p)**2
