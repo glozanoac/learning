@@ -32,14 +32,7 @@
 # alpha_SW=(404*(1+c2))/ 8008
 
 import numpy as np
-
-def backtracking(f, x, p, g, alpha, rho, c1, debug:bool = False):
-    while f(x + alpha*p) > f(x) + c1*alpha*s: 
-        alpha = rho*alpha
-
-        if debug:
-            print(f"alpha={alpha}, left={f(x + alpha*p)}, right={f(x) + c1*alpha*s}, armijo interval ={[0, alpha_A]}, isin={0 <= alpha and  alpha <= alpha_A}")
-    return alpha
+from armijo_backtrack import backtracking
 
 if __name__=="__main__":
     # function and gradient
@@ -54,13 +47,13 @@ if __name__=="__main__":
     g = df(x) # gradient of f in the point x
     p = -g    # search direction (in this case gradient descent)
     # NOTE: p = -df(x), then s = df(x) @ p  = - p @ p = -||p||^2
-    s = -np.linalg.norm(p)**2
+    s = g@p #-np.linalg.norm(p)**2
 
     alpha_A = (404*(1-c1))/4004
     #alpha_A = 0, 0.10088901098901
 
 
-    alpha = backtracking(f, x, p, g, alpha, rho, c1, debug=True) 
+    alpha = backtracking(f, x, p, g, alpha, rho, c1, alpha_A, debug=True) 
 
     print("\n" + "="*30)
     print("Would the calculated step also satisfy the weak and strong Wolfe conditions?")
