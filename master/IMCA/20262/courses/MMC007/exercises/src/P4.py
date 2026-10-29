@@ -1,4 +1,6 @@
-# Agenda=PARCIAL; Section=U6; Question=P4 PRACTICE
+# QUESTION: P4
+# SECTION: U6. Rate of convergence of steepest descent
+#
 #
 # Objetive:
 # - compute the minimum point using steepst descent
@@ -29,7 +31,7 @@ if __name__=="__main__":
         plt.annotate(str(i), (x[0], x[1]), textcoords="offset points", xytext=(5, 5))
 
     plt.gca().set_aspect("equal")
-    plt.savefig("U3-P4-steepest-descent_points.png")
+    plt.savefig("P4.png")
 
     #import pdb; pdb.set_trace()
     #plt.plot(x_list[:, 0], x_list[:, 1])

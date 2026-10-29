@@ -1,3 +1,6 @@
+# QUESTION: P6
+# SECTION: U7. Newton's method and modi␜ed Hessian
+
 import numpy as np
 from newton import modified_newton
 
@@ -61,7 +64,7 @@ if __name__=="__main__":
 
     plt.tight_layout()
 
-    plt.savefig("PARTIAL-U7_P21.png", dpi=200, bbox_inches='tight')
+    plt.savefig("P6.png", dpi=200, bbox_inches='tight')
     plt.show()
 
 

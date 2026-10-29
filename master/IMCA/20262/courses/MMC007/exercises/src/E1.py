@@ -1,10 +1,12 @@
+# QUESTION: E1
+# SECTION: U7. Newton's method and modi␜ed Hessian
+#
 import numpy as np
 from newton import modified_newton
 
-# agend=PARCIAL, section=U7, problem=P21, V22
 
 if __name__=="__main__":
-    def f(x): return np.exp(x)
+    def f(x): return np.exp(x) -x -1
     def df(x): return  np.exp(x) - 1
     def d2f(x): return np.exp(x)
 

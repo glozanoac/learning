@@ -1,5 +1,6 @@
-# Agenda: PARCIAL
-# Question: (Section U3) P1 PRACTICE
+# QUESTION: P1
+# SECTION: U3. Line search: Armijo and Wolfe
+#
 #
 # Objective:
 #   Computation of step size that satisfy Armijo condition for an step of the iteration
@@ -32,7 +33,7 @@
 # alpha_SW=(404*(1+c2))/ 8008
 
 import numpy as np
-from armijo_backtrack import backtracking
+from line_search import armijo_backtracking
 
 if __name__=="__main__":
     # function and gradient
@@ -53,7 +54,7 @@ if __name__=="__main__":
     #alpha_A = 0, 0.10088901098901
 
 
-    alpha = backtracking(f, x, p, g, alpha, rho, c1, alpha_A, debug=True) 
+    alpha = armijo_backtracking(f, x, p, g, alpha, rho, c1, alpha_A, debug=True) 
 
     print("\n" + "="*30)
     print("Would the calculated step also satisfy the weak and strong Wolfe conditions?")
