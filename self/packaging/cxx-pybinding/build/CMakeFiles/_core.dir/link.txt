@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -shared -flto=auto -Wl,--dependency-file=CMakeFiles/_core.dir/link.d  -o _core.cpython-314-x86_64-linux-gnu.so CMakeFiles/_core.dir/bindings/module.cpp.o  libfastla_core.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfastla_core.a CMakeFiles/fastla_core.dir/cpp/src/vector_ops.cpp.o
+/usr/bin/ranlib libfastla_core.a

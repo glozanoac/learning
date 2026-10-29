@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <stdexcept>
-#include "fastla_core/vector_ops.hpp"
+#include <fastla/vector_ops.hpp>
 
 namespace py = pybind11;
 
