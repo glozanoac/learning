@@ -1,0 +1,14 @@
+[build-system]
+requires = ["scikit-build-core>=0.8", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "fastla"
+version = "0.1.0"
+description = "C++ linear algebra kernels exposed to Python via pybind11"
+requires-python = ">=3.8"
+dependencies = ["numpy"]
+
+[tool.scikit-build]
+wheel.packages = ["python/fastla"]
+cmake.build-type = "Release"
