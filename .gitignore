@@ -4,3 +4,15 @@ data/
 electronics/
 *.xopp
 .*
+__pycache__
+self/mining/astay/
+*.so
+self/cxx-pybinding/build/
+
+master/IMCA/20262/courses/MMC006/
+master/IMCA/20262/courses/MMC201/
+master/IMCA/20262/optimization-group/
+self/dsa/
+master/IMCA/20262/courses/MMC007/exercises/calificada-I-estudio_annotated*.pdf
+master/IMCA/20262/courses/MMC007/optimization_complete_map.html
+fv/
