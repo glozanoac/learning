@@ -11,3 +11,5 @@ Analysis of the book:
   volume    = {6}
 }
 ```
+
+Aligned to the objetive and due that many of the decision variables in open-pit mining are discrete, we are going to focus on "discrete linear optimization", a reading plan was defined at [planning](./planning/)
