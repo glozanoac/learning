@@ -1,4 +1,4 @@
-# Master's degree in mathematical and computational modeling - IMCA
+# Mathematical and Computational Modeling - IMCA
 
 ## Courses
 ### II
