@@ -1,0 +1,79 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\dd}{\mathbf{d}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\I}{\mathbf{I}}
+
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+
+\title{A Basic Direction That Is Not Feasible at a Degenerate BFS}
+\author{Bertsimas \& Tsitsiklis, Section 3.1, Remark (b)}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Statement}
+If $\x$ is a degenerate basic feasible solution, the $j$th basic direction $\dd$ is not always a feasible direction. A basic variable $x_{B(i)}$ can be zero while the corresponding component $d_{B(i)}$ of $\dd_B=-\B^{-1}\A_j$ is negative. Moving along $\dd$ then violates $x_{B(i)}\ge 0$ immediately.
+
+\section*{Problem data}
+Consider the polyhedron in standard form ($m=2$, $n=4$):
+\[
+\begin{aligned}
+x_1 + x_3 &= 1,\\
+x_2 + x_3 - x_4 &= 0,\\
+x_1,x_2,x_3,x_4 &\ge 0,
+\end{aligned}
+\qquad
+\A=\begin{bmatrix}1&0&1&0\\[2pt]0&1&1&-1\end{bmatrix},\quad
+\bb=\begin{bmatrix}1\\[2pt]0\end{bmatrix}.
+\]
+
+\section*{A degenerate basic feasible solution}
+Choose the basis $B(1)=1$, $B(2)=2$. Then
+\[
+\B=[\A_1\ \A_2]=\I,\qquad
+\x_B=\B^{-1}\bb=\begin{bmatrix}1\\0\end{bmatrix},
+\]
+so, with the nonbasic variables $x_3=x_4=0$,
+\[
+\x=(1,0,0,0).
+\]
+This point satisfies $\A\x=\bb$ and $\x\ge 0$, so it is a basic feasible solution. It is \emph{degenerate} because the basic variable $x_{B(2)}=x_2$ equals $0$.
+
+\section*{The basic direction for $j=3$ is infeasible}
+Set $d_3=1$ and $d_4=0$. Then
+\[
+\dd_B=-\B^{-1}\A_3=-\begin{bmatrix}1\\1\end{bmatrix}=\begin{bmatrix}-1\\-1\end{bmatrix},
+\qquad
+\dd=(-1,-1,1,0).
+\]
+Here $x_{B(2)}=x_2=0$ and $d_{B(2)}=d_2=-1<0$, which is exactly the situation described in the statement.
+
+\paragraph{Verification.} We have $\A\dd = -\A_1-\A_2+\A_3 = \bm{0}$, so the equality constraints are preserved along $\dd$. For any $\theta>0$,
+\[
+\x+\theta\dd=(1-\theta,\;-\theta,\;\theta,\;0),
+\]
+and its second component is $-\theta<0$. Therefore $\x+\theta\dd\notin P$ for every $\theta>0$, and $\dd$ is not a feasible direction at $\x$. In the simplex method, this gives the step length $\theta^*=0$.
+
+\section*{Contrast: the basic direction for $j=4$ is feasible}
+At the same point, set $d_4=1$ and $d_3=0$:
+\[
+\dd_B=-\B^{-1}\A_4=-\begin{bmatrix}0\\-1\end{bmatrix}=\begin{bmatrix}0\\1\end{bmatrix},
+\qquad
+\dd=(0,1,0,1).
+\]
+For every $\theta\ge 0$,
+\[
+\x+\theta\dd=(1,\;\theta,\;0,\;\theta)\ge 0,
+\]
+so this direction is feasible. Hence, at a degenerate basic feasible solution, some basic directions may be feasible and others not. This is why the text says that $\dd$ is \emph{not always} feasible.
+
+\end{document}
