@@ -1,5 +1,5 @@
 import numpy as np
-from armijo_backtrack import backtracking
+from line_search import armijo_backtracking
 from cholesky import cholesky_factorization, shifted_cholesky
 from linear_systems import forward_substitution, backward_substitution
 
@@ -37,7 +37,7 @@ def modified_newton(f, df, d2f, x0, delta, epsilon, k, debug: bool = False, coll
         L, t = shifted_cholesky(H, delta)
         # forward and backward substitution
         y = forward_substitution(L, -g); p = backward_substitution(L.T, y)
-        alpha = backtracking(f, x0, p, g, a0=1, rho=0.5, c1=1e-4)
+        alpha = armijo_backtracking(f, x0, p, g, a0=1, rho=0.5, c1=1e-4)
         x1 = x0 + alpha*p
 
         if debug:
