@@ -120,18 +120,16 @@ Result: the driver built for both kernels.
 
 ![dkms status](images/08-dkms-status.png)
 
-### Boot entry for the LTS kernel (systemd-boot)
+### Boot entry for the LTS kernel (GRUB)
 
-systemd-boot does not add `linux-lts` to the boot menu automatically:
+GRUB detects every installed kernel when its config is regenerated:
 
 ```bash
-ls /boot/loader/entries/
-sudo cp /boot/loader/entries/<your-entry>.conf /boot/loader/entries/arch-lts.conf
-sudoedit /boot/loader/entries/arch-lts.conf
-#   vmlinuz-linux          -> vmlinuz-linux-lts
-#   initramfs-linux.img    -> initramfs-linux-lts.img
-#   title                  -> Arch Linux (LTS)
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+grep -E "menuentry '.*lts" /boot/grub/grub.cfg    # should list the LTS entry
 ```
+
+The LTS kernel then appears under **Advanced options for Arch Linux** in the boot menu. Re-run `grub-mkconfig` whenever a kernel is added or removed.
 
 Boot the normal kernel by default. Use LTS only if a kernel update breaks the NVIDIA build.
 
@@ -141,7 +139,7 @@ Boot the normal kernel by default. Use LTS only if a kernel update breaks the NV
 lsmod | grep -E 'nvidia|nouveau'   # nvidia listed, nouveau absent
 nvidia-smi                         # shows the GTX 1050
 ```
-
+![verify after boot](images/09-verify-after-boot.png)
 ---
 
 ## 3. Toolchain
@@ -161,13 +159,43 @@ yay -S cuda-12.9
 | `hwloc` (`lstopo`), `numactl` | Core/cache topology for the affinity chapters |
 | `perf` | CPU profiling |
 
-**Note on `cuda-12.9`:** it depends on AUR `gcc14`, which takes hours to compile. Clang only needs `ptxas`/`nvlink`, so you can remove `gcc14` from `depends` when yay offers to edit the PKGBUILD. The cost is that `nvcc` won't work with GCC 16, but none of these books needs `nvcc`.
-
+### `cuda-12.9` and the `gcc14` dependency
+ 
+`cuda-12.9` depends on AUR `gcc14`, which takes hours to compile (GCC bootstraps itself in 3 stages). Clang only needs `ptxas`/`nvlink`, so `gcc14` is optional for these books. Its only use is making `nvcc` work, and none of these books needs `nvcc`.
+ 
+**`cuda-12.9` without `gcc14`.**
+ 
+```bash
+# 1. Stop the build (Ctrl+C) and delete its cache (several GB)
+rm -rf ~/.cache/yay/gcc14
+ 
+# 2. Get the package recipe
+cd ~/.cache/yay
+yay -G cuda-12.9
+cd cuda-12.9
+ 
+# 3. Find every reference to gcc14
+grep -n gcc14 PKGBUILD
+```
+ 
+Delete `'gcc14'` from the `depends=(...)` line, then build and install:
+ 
+```bash
+makepkg -si
+```
+ 
+If `grep` shows `gcc14` anywhere besides `depends` (probably the setting that tells `nvcc` which host compiler to use), check those lines before building. They don't affect Clang.
+ 
+Either way, `cuda-12.9` ends up installed and GPU offload with Clang works.
+ 
 Find the CUDA path:
-
+ 
 ```bash
 pacman -Ql cuda-12.9 | grep bin/ptxas     # usually /opt/cuda/bin/ptxas
 ```
+
+![verify cuda 12 installation](images/10-verify-cuda12-installation.png) 
+
 
 ---
 
