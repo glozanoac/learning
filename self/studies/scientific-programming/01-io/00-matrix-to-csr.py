@@ -30,5 +30,7 @@ if __name__=="__main__":
         print(f"row={i}, csr={csr}")
 
     print(f"\ncsr={csr}")
+    d = csr['row_ptr'][-1]/(m*n)
+    print(f"density(A)={d}")
 
             
