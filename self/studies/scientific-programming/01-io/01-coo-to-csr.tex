@@ -1,0 +1,168 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{etoolbox}
+\AtBeginEnvironment{algorithmic}{\small}
+\newcommand{\id}[1]{\texttt{#1}}
+\setlength{\textfloatsep}{12pt}
+
+\title{From COO to CSR: Counting-Sort Conversion}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\section{Problem}
+
+Let $A \in \mathbb{R}^{M \times N}$ have $\id{nnz}$ stored entries given in
+coordinate (COO) form, e.g.\ as read from a Matrix Market file after
+subtracting 1 from every index:
+\[
+  (R[k],\, C[k],\, V[k]), \qquad k = 0, \dots, \id{nnz}-1,
+\]
+in arbitrary order. The goal is to build the compressed sparse row (CSR)
+arrays
+\[
+  \id{row\_ptr}[0..M], \qquad \id{col}[0..\id{nnz}-1], \qquad \id{val}[0..\id{nnz}-1],
+\]
+such that the entries of row $i$ occupy positions
+$\id{row\_ptr}[i], \dots, \id{row\_ptr}[i+1]-1$.
+All indices are 0-based.
+
+\section{Algorithm}
+
+\begin{algorithm}[H]
+\caption{COO to CSR (counting sort by row)}
+\label{alg:coo2csr}
+\begin{algorithmic}[1]
+\Require $M$, $\id{nnz}$; COO arrays $R, C, V$ of length $\id{nnz}$, with $0 \le R[k] < M$
+\Ensure CSR arrays $\id{row\_ptr}, \id{col}, \id{val}$
+\Statex
+\State allocate $\id{row\_ptr}[0..M]$, $\id{col}[0..\id{nnz}-1]$, $\id{val}[0..\id{nnz}-1]$, $\id{next}[0..M-1]$
+\Statex \textit{// Step 1: count nonzeros per row (stored shifted by one)}
+\For{$i \gets 0$ \textbf{to} $M$}
+  \State $\id{row\_ptr}[i] \gets 0$
+\EndFor
+\For{$k \gets 0$ \textbf{to} $\id{nnz}-1$}
+  \State $\id{row\_ptr}[R[k]+1] \gets \id{row\_ptr}[R[k]+1] + 1$
+\EndFor
+\Statex \textit{// Step 2: prefix sum; now $\id{row\_ptr}[i]$ = start of row $i$}
+\For{$i \gets 1$ \textbf{to} $M$}
+  \State $\id{row\_ptr}[i] \gets \id{row\_ptr}[i] + \id{row\_ptr}[i-1]$
+\EndFor
+\Statex \textit{// Step 3: write cursors}
+\For{$i \gets 0$ \textbf{to} $M-1$}
+  \State $\id{next}[i] \gets \id{row\_ptr}[i]$
+\EndFor
+\Statex \textit{// Step 4: scatter each triplet into its row segment}
+\For{$k \gets 0$ \textbf{to} $\id{nnz}-1$}
+  \State $r \gets R[k]$
+  \State $p \gets \id{next}[r]$
+  \State $\id{col}[p] \gets C[k]$
+  \State $\id{val}[p] \gets V[k]$
+  \State $\id{next}[r] \gets p + 1$
+\EndFor
+\State \Return $\id{row\_ptr}, \id{col}, \id{val}$
+\end{algorithmic}
+\end{algorithm}
+
+\noindent\textbf{Remarks.}
+\begin{itemize}
+  \item After Step 2, $\id{row\_ptr}[M] = \id{nnz}$.
+  \item Step 4 is \emph{stable}: entries of the same row keep their input
+        order. Hence, if the input is already sorted by $(R, C)$, the output
+        has sorted columns and Step 5 below can be skipped.
+  \item The array $\id{next}$ can be avoided by using $\id{row\_ptr}$
+        itself as the cursor array and shifting it back by one position at the
+        end ($\id{row\_ptr}[i] \gets \id{row\_ptr}[i-1]$ for
+        $i = M, \dots, 1$; $\id{row\_ptr}[0] \gets 0$).
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Optional: sort columns within each row (Step 5)}
+\label{alg:sortrows}
+\begin{algorithmic}[1]
+\Require CSR arrays $\id{row\_ptr}, \id{col}, \id{val}$ for $M$ rows
+\Ensure Same matrix, with $\id{col}$ increasing within every row
+\For{$i \gets 0$ \textbf{to} $M-1$}
+  \Statex \hspace{\algorithmicindent}\textit{// insertion sort on the segment of row $i$}
+  \For{$p \gets \id{row\_ptr}[i]+1$ \textbf{to} $\id{row\_ptr}[i+1]-1$}
+    \State $c \gets \id{col}[p]$, \quad $v \gets \id{val}[p]$
+    \State $q \gets p - 1$
+    \While{$q \ge \id{row\_ptr}[i]$ \textbf{and} $\id{col}[q] > c$}
+      \State $\id{col}[q+1] \gets \id{col}[q]$, \quad $\id{val}[q+1] \gets \id{val}[q]$
+      \State $q \gets q - 1$
+    \EndWhile
+    \State $\id{col}[q+1] \gets c$, \quad $\id{val}[q+1] \gets v$
+  \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\noindent Insertion sort is chosen because rows of sparse matrices are usually
+short; for long rows a comparison sort such as quicksort on the pair
+$(\id{col}, \id{val})$ is preferable.
+
+\section{Complexity}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Step & Time & Extra memory \\
+\midrule
+1. Count        & $O(M + \id{nnz})$ & -- \\
+2. Prefix sum   & $O(M)$                & -- \\
+3. Cursors      & $O(M)$                & $M$ integers \\
+4. Scatter      & $O(\id{nnz})$     & -- \\
+\midrule
+Total (Alg.~\ref{alg:coo2csr}) & $O(M + \id{nnz})$ & $M$ integers \\
+\midrule
+5. Sort rows (Alg.~\ref{alg:sortrows}) & $O\!\left(\sum_i n_i^2\right)$ worst case & -- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Here $n_i$ is the number of nonzeros in row $i$. Since every entry
+must be read at least once, $O(M + \id{nnz})$ is optimal for the
+conversion itself.
+
+\section{Worked example}
+
+\[
+A = \begin{pmatrix}
+10 & 0 & 1 & 7 \\
+0 & 3 & 3 & 0 \\
+0 & 21 & 0 & 0 \\
+4 & 0 & 5 & 6
+\end{pmatrix},
+\qquad M = N = 4,\ \id{nnz} = 9.
+\]
+
+\noindent COO input (file order, 0-based):
+\begin{center}
+\begin{tabular}{c|ccccccccc}
+$k$ & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 \\
+\hline
+$R$ & 3 & 0 & 2 & 1 & 0 & 3 & 1 & 0 & 3 \\
+$C$ & 2 & 0 & 1 & 2 & 3 & 0 & 1 & 2 & 3 \\
+$V$ & 5 & 10 & 21 & 3 & 7 & 4 & 3 & 1 & 6 \\
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item After Step 1: $\id{row\_ptr} = [0, 3, 2, 1, 3]$.
+  \item After Step 2: $\id{row\_ptr} = [0, 3, 5, 6, 9]$.
+  \item After Step 4:
+        $\id{val} = [10, 7, 1 \mid 3, 3 \mid 21 \mid 5, 4, 6]$,
+        $\id{col} = [0, 3, 2 \mid 2, 1 \mid 1 \mid 2, 0, 3]$.
+  \item After Step 5:
+        $\id{val} = [10, 1, 7, 3, 3, 21, 4, 5, 6]$,
+        $\id{col} = [0, 2, 3, 1, 2, 1, 0, 2, 3]$.
+\end{itemize}
+
+\end{document}
