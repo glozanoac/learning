@@ -1,0 +1,234 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{hyperref}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\relu}{\operatorname{ReLU}}
+\newcommand{\Diag}{\operatorname{Diag}}
+% Colour convention
+\definecolor{chg}{RGB}{200,0,0}
+\newcommand{\C}[1]{{\color{chg}#1}}          % change / addition (red)
+\newcommand{\fix}[2]{#1\;\C{\to\;#2}}         % your expression -> corrected one
+
+\tcbset{boxstyle/.style={colback=gray!5,colframe=gray!60,boxrule=0.5pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}}
+
+\title{MMC201 -- Review of Question 7\\[2pt]\large One gradient-descent step for a one-hidden-layer network}
+\author{Gustavo Lozano}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{tcolorbox}[boxstyle]
+\textbf{Sources.} Problem statement: \texttt{11-nn-exercises.pdf}, Question~7.
+Hand derivation: \texttt{11-nn.rnote}, pp.~10--14 (source of the black content in this document).
+
+\medskip
+\textbf{Colour legend.} Black: your derivation, transcribed from \texttt{11-nn.rnote} (pp.~10--14), and
+the problem statement. \C{Red: my changes} --- shape corrections, the compact $\delta$ notation, the numerical
+values and the general rule. Notation $a\;\C{\to\;b}$ means ``you wrote $a$, I replace it by $b$''.
+\end{tcolorbox}
+
+\section{Problem}
+Statement taken from \texttt{11-nn-exercises.pdf}, Question~7.
+
+\[
+Z_1 = W_1X + B_1,\qquad H = \relu(Z_1),\qquad Y = W_2H + B_2,\qquad
+E = \tfrac12\lVert Y - Y_*\rVert^2,
+\]
+\[
+X=\begin{pmatrix}1\\2\end{pmatrix},\;
+W_1=\begin{pmatrix}1&-1\\0&1\end{pmatrix},\;
+B_1=\begin{pmatrix}1\\-1\end{pmatrix},\;
+W_2=\begin{pmatrix}2&-1\end{pmatrix},\;
+B_2=(0),\;
+Y_*=(1),\;
+\eta=0.1 .
+\]
+Shapes: $X,B_1,Z_1,H\in\R^{2\times1}$, $W_1\in\R^{2\times2}$, $W_2\in\R^{1\times2}$, $Y\in\R^{1\times1}$.
+
+\C{\textbf{Convention.} Every gradient $\nabla_\theta E$ has the same shape as $\theta$, so that
+$\theta_{\text{nuevo}}=\theta-\eta\nabla_\theta E$ is shape-compatible. $\relu'(0)=0$ (as in Question~1).}
+
+\section{Setup}
+
+\[
+\theta=\mathrm{FLAT}(W_1,B_1,W_2,B_2),\qquad
+\theta_{k+1}=\theta_k+\alpha_k p_k,\quad p_k=-\nabla_\theta E(\theta_k),\quad \alpha_k=\eta=0.1 .
+\]
+\C{Per parameter: \quad $W_{\ell,\text{nuevo}}=W_\ell-\eta\nabla_{W_\ell}E,\qquad B_{\ell,\text{nuevo}}=B_\ell-\eta\nabla_{B_\ell}E,\qquad \ell=1,2.$}
+
+\section{Derivation}
+
+\subsection{$\nabla_{B_2}E$}
+Chain $B_2\to Y\to E$:
+\[
+\frac{\partial E}{\partial B_2}=\frac{\partial E}{\partial Y}\cdot\frac{\partial Y}{\partial B_2},\qquad
+\frac{\partial E}{\partial Y}=Y-Y_*\in\R^{1\times1}\;(1),\qquad
+\frac{\partial Y}{\partial B_2}=1 .
+\]
+\[
+\frac{\partial E}{\partial B_2}=Y-Y_*\quad(2)\qquad \C{\eqqcolon\;\delta_2 .}
+\]
+\C{$\delta_2=\nabla_YE$ is the \emph{output error signal}; it is reused in every other gradient.}
+
+\subsection{$\nabla_{W_2}E$}
+Chain $W_2\to Y\to E$:
+\[
+\nabla_{W_2}E=\Bigl(\frac{\partial E}{\partial w_{2,1j}}\Bigr)_{j=1,2}\in\fix{\R^{2\times1}}{\R^{1\times2}},
+\qquad
+\frac{\partial Y}{\partial w_{2,1j}}=\frac{\partial}{\partial w_{2,1j}}\Bigl(\sum_{m=1}^{2}w_{2,1m}H_m+B_2\Bigr)=H_j,
+\]
+\[
+\frac{\partial E}{\partial w_{2,1j}}=\frac{\partial E}{\partial Y}\,H_j,
+\qquad
+\nabla_{W_2}E=\fix{\frac{\partial E}{\partial Y}\,H\in\R^{2\times1}\;(3)}{\;\delta_2\,H^{\top}\in\R^{1\times2}} .
+\]
+\C{Reason: $W_2$ is $1\times2$, so its gradient must be a row. Entries unchanged.}
+
+\subsection{$\nabla_{B_1}E$}
+Chain $B_1\to Z_1\to H\to Y\to E$:
+\[
+\frac{\partial E}{\partial B_{1,j}}
+=\underbrace{\frac{\partial E}{\partial Y}}_{1\times1}\,
+ \underbrace{\frac{\partial Y}{\partial H}}_{1\times2}\,
+ \underbrace{\frac{\partial H}{\partial Z_1}}_{2\times2}\,
+ \underbrace{\frac{\partial Z_1}{\partial B_{1,j}}}_{2\times1},
+\]
+\[
+\frac{\partial Y}{\partial H}=W_2\in\R^{1\times2}\;(4),\qquad
+\frac{\partial H_i}{\partial z_{1,j}}=\delta_{ij}\,\ind\{z_{1,j}>0\}\;(5),\qquad
+\frac{\partial z_{1,i}}{\partial B_{1,j}}=\delta_{ij}.
+\]
+\[
+\nabla_{B_1}E=\begin{bmatrix}\dfrac{\partial E}{\partial B_{1,1}}\\[8pt]\dfrac{\partial E}{\partial B_{1,2}}\end{bmatrix}^{\!\top}
+=(Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}&0\\0&\ind\{z_{1,2}>0\}\end{bmatrix}\in\R^{1\times2}
+\]
+\[
+\C{\;\to\;\nabla_{B_1}E=\bigl(W_2^{\top}\delta_2\bigr)\odot\relu'(Z_1)\;\eqqcolon\;\delta_1\in\R^{2\times1}.}
+\]
+\C{Two changes: (i) transpose, so the gradient has the shape of $B_1$; (ii) $\Diag(v)\,u=u\odot v$, so the
+$2\times2$ diagonal Jacobian is never built (same identity as in Q5--Q6). $\delta_1=\nabla_{Z_1}E$ is the
+\emph{hidden error signal}.}
+
+\subsection{$\nabla_{W_1}E$}
+Chain $W_1\to Z_1\to H\to Y\to E$:
+\[
+\nabla_{W_1}E=\Bigl(\frac{\partial E}{\partial w_{1,ij}}\Bigr)_{i,j=1,2}\in\fix{\R^{4\times1}}{\R^{2\times2}},
+\qquad
+\frac{\partial E}{\partial w_{1,ij}}
+=\underbrace{\frac{\partial E}{\partial Y}}_{\fix{1\times2}{1\times1}}\,
+ \underbrace{\frac{\partial Y}{\partial H}}_{1\times2}\,
+ \underbrace{\frac{\partial H}{\partial Z_1}}_{2\times2}\,
+ \underbrace{\frac{\partial Z_1}{\partial w_{1,ij}}}_{2\times1},
+\]
+\[
+\frac{\partial z_{1,k}}{\partial w_{1,ij}}=\frac{\partial}{\partial w_{1,ij}}\Bigl(\sum_{m=1}^{2}w_{1,km}x_m+B_{1,k}\Bigr)=\delta_{ki}\,x_j,
+\qquad
+\frac{\partial Z_1}{\partial w_{1,ij}}=\begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}\in\R^{2\times1},
+\]
+\[
+\frac{\partial E}{\partial w_{1,ij}}=(Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}&0\\0&\ind\{z_{1,2}>0\}\end{bmatrix}
+\begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}
+\;\C{=\;\sum_k(\delta_1)_k\,\delta_{ki}\,x_j\;=\;(\delta_1)_i\,x_j .}
+\]
+\[
+\nabla_{W_1}E=\begin{bmatrix}
+(Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}\,x_1\\0\end{bmatrix}\\[10pt]
+(Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}\,x_2\\0\end{bmatrix}\\[10pt]
+(Y-Y_*)\,W_2\begin{bmatrix}0\\\ind\{z_{1,2}>0\}\,x_1\end{bmatrix}\\[10pt]
+(Y-Y_*)\,W_2\begin{bmatrix}0\\\ind\{z_{1,2}>0\}\,x_2\end{bmatrix}
+\end{bmatrix}
+\;\C{=\;\begin{bmatrix}(\delta_1)_1x_1\\(\delta_1)_1x_2\\(\delta_1)_2x_1\\(\delta_1)_2x_2\end{bmatrix}
+\;\to\;\nabla_{W_1}E=\delta_1X^{\top}\in\R^{2\times2}.}
+\]
+\C{Your four blocks are exactly the entries of the outer product $\delta_1X^{\top}$, read row by row. The common
+factor $(Y-Y_*)W_2\Diag(\cdot)$ is $\delta_1^{\top}$, already computed for $\nabla_{B_1}E$: backpropagation
+computes it once and reuses it.}
+
+\section{\C{Summary in compact form}}
+
+{\color{chg}
+\begin{tcolorbox}[boxstyle]
+\[
+\delta_2=Y-Y_*,\qquad \delta_1=\bigl(W_2^{\top}\delta_2\bigr)\odot\relu'(Z_1),
+\]
+\[
+\nabla_{W_2}E=\delta_2H^{\top},\quad \nabla_{B_2}E=\delta_2,\qquad
+\nabla_{W_1}E=\delta_1X^{\top},\quad \nabla_{B_1}E=\delta_1 .
+\]
+\end{tcolorbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Gradient & {\color{black}Your notes} & Compact form \\
+\midrule
+$\nabla_{B_2}E$ & {\color{black}$Y-Y_*$} & $\delta_2$ \\
+$\nabla_{W_2}E$ & {\color{black}$\frac{\partial E}{\partial Y}H\in\R^{2\times1}$} & $\delta_2H^{\top}\in\R^{1\times2}$ \\
+$\nabla_{B_1}E$ & {\color{black}$(Y-Y_*)\,W_2\,\Diag(\ind\{Z_1>0\})\in\R^{1\times2}$} & $\delta_1\in\R^{2\times1}$ \\
+$\nabla_{W_1}E$ & {\color{black}four blocks, $\R^{4\times1}$} & $\delta_1X^{\top}\in\R^{2\times2}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+\section{\C{Numerical computation}}
+{\color{chg}
+\paragraph{Forward pass.}
+\[
+Z_1=\begin{pmatrix}1-2\\0+2\end{pmatrix}+\begin{pmatrix}1\\-1\end{pmatrix}=\begin{pmatrix}0\\1\end{pmatrix},\quad
+H=\begin{pmatrix}0\\1\end{pmatrix},\quad
+Y=2(0)-1(1)+0=-1,\quad
+E=\tfrac12(-1-1)^2=2.
+\]
+
+\paragraph{Backward pass.}
+\[
+\delta_2=-2,\qquad
+W_2^{\top}\delta_2=\begin{pmatrix}-4\\2\end{pmatrix},\qquad
+\relu'(Z_1)=\begin{pmatrix}0\\1\end{pmatrix},\qquad
+\delta_1=\begin{pmatrix}-4\\2\end{pmatrix}\odot\begin{pmatrix}0\\1\end{pmatrix}=\begin{pmatrix}0\\2\end{pmatrix}.
+\]
+\emph{Caution:} $z_{1,1}=0$ lies exactly on the ReLU kink. With $\relu'(0)=0$ the first hidden unit passes
+no gradient. Using $\relu'(0)=1$ would give $\delta_1=(-4,2)^{\top}$ and different updates.
+
+\paragraph{Gradients.}
+\[
+\nabla_{B_2}E=-2,\quad
+\nabla_{W_2}E=\begin{pmatrix}0&-2\end{pmatrix},\quad
+\nabla_{B_1}E=\begin{pmatrix}0\\2\end{pmatrix},\quad
+\nabla_{W_1}E=\begin{pmatrix}0\\2\end{pmatrix}\begin{pmatrix}1&2\end{pmatrix}=\begin{pmatrix}0&0\\2&4\end{pmatrix}.
+\]
+
+\paragraph{Updates ($\eta=0.1$).}
+\[
+W_{1,\text{nuevo}}=\begin{pmatrix}1&-1\\-0.2&0.6\end{pmatrix},\quad
+B_{1,\text{nuevo}}=\begin{pmatrix}1\\-1.2\end{pmatrix},\quad
+W_{2,\text{nuevo}}=\begin{pmatrix}2&-0.8\end{pmatrix},\quad
+B_{2,\text{nuevo}}=0.2 .
+\]
+
+\paragraph{Sanity check.}
+With the new parameters, $Z_1=(0,-0.2)^{\top}$, $H=(0,0)^{\top}$, $Y=0.2$, $E=\tfrac12(0.8)^2=0.32<2$.
+}
+
+\section{\C{General rule}}
+{\color{chg}
+For $Z_\ell=W_\ell A_{\ell-1}+B_\ell$, $A_\ell=f_\ell(Z_\ell)$, $A_0=X$, $\ell=1,\dots,L$:
+\[
+\delta_L=\nabla_{A_L}E\odot f_L'(Z_L),\qquad
+\delta_\ell=\bigl(W_{\ell+1}^{\top}\delta_{\ell+1}\bigr)\odot f_\ell'(Z_\ell),\qquad
+\nabla_{W_\ell}E=\delta_\ell A_{\ell-1}^{\top},\qquad \nabla_{B_\ell}E=\delta_\ell .
+\]
+Question 7 is $L=2$, $f_1=\relu$, $f_2=\mathrm{id}$, $A_1=H$. Questions 4--6 are its single-layer pieces.
+}
+
+\end{document}
