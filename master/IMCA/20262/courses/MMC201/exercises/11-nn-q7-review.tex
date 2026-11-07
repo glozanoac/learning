@@ -107,15 +107,36 @@ Chain $B_1\to Z_1\to H\to Y\to E$:
 \frac{\partial z_{1,i}}{\partial B_{1,j}}=\delta_{ij}.
 \]
 \[
-\nabla_{B_1}E=\begin{bmatrix}\dfrac{\partial E}{\partial B_{1,1}}\\[8pt]\dfrac{\partial E}{\partial B_{1,2}}\end{bmatrix}^{\!\top}
+\fix{\nabla_{B_1}E}{\dfrac{\partial E}{\partial B_1}}=\begin{bmatrix}\dfrac{\partial E}{\partial B_{1,1}}\\[8pt]\dfrac{\partial E}{\partial B_{1,2}}\end{bmatrix}^{\!\top}
 =(Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}&0\\0&\ind\{z_{1,2}>0\}\end{bmatrix}\in\R^{1\times2}
 \]
+{\color{chg}
+Let $r\coloneqq\relu'(Z_1)=\begin{pmatrix}\ind\{z_{1,1}>0\}\\\ind\{z_{1,2}>0\}\end{pmatrix}$, so that
+$\begin{bmatrix}\ind\{z_{1,1}>0\}&0\\0&\ind\{z_{1,2}>0\}\end{bmatrix}=\Diag(r)$, and $\delta_2\coloneqq Y-Y_*$.
+\begin{align*}
+\nabla_{B_1}E
+&\coloneqq\Bigl(\frac{\partial E}{\partial B_1}\Bigr)^{\top}\in\R^{2\times1}
+&&\\
+&=\Bigl[(Y-Y_*)\,W_2\,\Diag(r)\Bigr]^{\top}
+&&\\
+&=\Diag(r)^{\top}\,W_2^{\top}\,(Y-Y_*)^{\top}
+&&(ABC)^{\top}=C^{\top}B^{\top}A^{\top}\\
+&=\Diag(r)\,W_2^{\top}\,\delta_2
+&&\Diag(r)^{\top}=\Diag(r),\;\;\delta_2\in\R^{1\times1}\Rightarrow\delta_2^{\top}=\delta_2\\
+&=\begin{bmatrix}r_1&0\\0&r_2\end{bmatrix}
+  \begin{bmatrix}(W_2^{\top}\delta_2)_1\\(W_2^{\top}\delta_2)_2\end{bmatrix}
+&&\\
+&=\begin{bmatrix}(W_2^{\top}\delta_2)_1\,r_1\\(W_2^{\top}\delta_2)_2\,r_2\end{bmatrix}
+&&\\
+&=\bigl(W_2^{\top}\delta_2\bigr)\odot r
+&&(u\odot v)_i=u_i\,v_i\\
+&=\bigl(W_2^{\top}\delta_2\bigr)\odot\relu'(Z_1)\;\eqqcolon\;\delta_1\in\R^{2\times1}.
+&&
+\end{align*}
 \[
-\C{\;\to\;\nabla_{B_1}E=\bigl(W_2^{\top}\delta_2\bigr)\odot\relu'(Z_1)\;\eqqcolon\;\delta_1\in\R^{2\times1}.}
+\frac{\partial Z_1}{\partial B_1}=I_2\;\Longrightarrow\;\nabla_{B_1}E=\nabla_{Z_1}E=\delta_1 .
 \]
-\C{Two changes: (i) transpose, so the gradient has the shape of $B_1$; (ii) $\Diag(v)\,u=u\odot v$, so the
-$2\times2$ diagonal Jacobian is never built (same identity as in Q5--Q6). $\delta_1=\nabla_{Z_1}E$ is the
-\emph{hidden error signal}.}
+}
 
 \subsection{$\nabla_{W_1}E$}
 Chain $W_1\to Z_1\to H\to Y\to E$:
@@ -136,8 +157,29 @@ Chain $W_1\to Z_1\to H\to Y\to E$:
 \[
 \frac{\partial E}{\partial w_{1,ij}}=(Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}&0\\0&\ind\{z_{1,2}>0\}\end{bmatrix}
 \begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}
-\;\C{=\;\sum_k(\delta_1)_k\,\delta_{ki}\,x_j\;=\;(\delta_1)_i\,x_j .}
 \]
+{\color{chg}
+With $r=\relu'(Z_1)$, $\delta_2=Y-Y_*$ and $\delta_1=\Diag(r)\,W_2^{\top}\delta_2$ (Section~3.3):
+\begin{align*}
+\frac{\partial E}{\partial w_{1,ij}}
+&=(Y-Y_*)\,W_2\,\Diag(r)\begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}
+&&\\
+&=\bigl(\Diag(r)\,W_2^{\top}\,\delta_2\bigr)^{\top}\begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}
+&&A^{\top}B^{\top}C^{\top}=(CBA)^{\top},\;\Diag(r)^{\top}=\Diag(r),\;\delta_2^{\top}=\delta_2\\
+&=\delta_1^{\top}\begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}
+&&\\
+&=\begin{bmatrix}(\delta_1)_1&(\delta_1)_2\end{bmatrix}\begin{bmatrix}\delta_{1i}\,x_j\\\delta_{2i}\,x_j\end{bmatrix}
+&&\\
+&=(\delta_1)_1\,\delta_{1i}\,x_j+(\delta_1)_2\,\delta_{2i}\,x_j
+&&\\
+&=\sum_{k=1}^{2}(\delta_1)_k\,\delta_{ki}\,x_j
+&&\\
+&=(\delta_1)_i\,x_j
+&&\textstyle\sum_k a_k\,\delta_{ki}=a_i\\
+&=\bigl(\delta_1X^{\top}\bigr)_{ij}
+&&(uv^{\top})_{ij}=u_i\,v_j .
+\end{align*}
+}
 \[
 \nabla_{W_1}E=\begin{bmatrix}
 (Y-Y_*)\,W_2\begin{bmatrix}\ind\{z_{1,1}>0\}\,x_1\\0\end{bmatrix}\\[10pt]
@@ -145,12 +187,22 @@ Chain $W_1\to Z_1\to H\to Y\to E$:
 (Y-Y_*)\,W_2\begin{bmatrix}0\\\ind\{z_{1,2}>0\}\,x_1\end{bmatrix}\\[10pt]
 (Y-Y_*)\,W_2\begin{bmatrix}0\\\ind\{z_{1,2}>0\}\,x_2\end{bmatrix}
 \end{bmatrix}
-\;\C{=\;\begin{bmatrix}(\delta_1)_1x_1\\(\delta_1)_1x_2\\(\delta_1)_2x_1\\(\delta_1)_2x_2\end{bmatrix}
-\;\to\;\nabla_{W_1}E=\delta_1X^{\top}\in\R^{2\times2}.}
+\;\C{=\;\begin{bmatrix}(\delta_1)_1x_1\\(\delta_1)_1x_2\\(\delta_1)_2x_1\\(\delta_1)_2x_2\end{bmatrix}}
 \]
-\C{Your four blocks are exactly the entries of the outer product $\delta_1X^{\top}$, read row by row. The common
-factor $(Y-Y_*)W_2\Diag(\cdot)$ is $\delta_1^{\top}$, already computed for $\nabla_{B_1}E$: backpropagation
-computes it once and reuses it.}
+{\color{chg}
+\begin{align*}
+\nabla_{W_1}E
+&=\begin{bmatrix}\dfrac{\partial E}{\partial w_{1,11}}&\dfrac{\partial E}{\partial w_{1,12}}\\[8pt]
+                 \dfrac{\partial E}{\partial w_{1,21}}&\dfrac{\partial E}{\partial w_{1,22}}\end{bmatrix}
+&&\nabla_{W_1}E\in\R^{2\times2}\\
+&=\begin{bmatrix}(\delta_1)_1x_1&(\delta_1)_1x_2\\(\delta_1)_2x_1&(\delta_1)_2x_2\end{bmatrix}
+&&\\
+&=\begin{bmatrix}(\delta_1)_1\\(\delta_1)_2\end{bmatrix}\begin{bmatrix}x_1&x_2\end{bmatrix}
+&&\\
+&=\delta_1X^{\top}\in\R^{2\times2}.
+&&
+\end{align*}
+}
 
 \section{\C{Summary in compact form}}
 
@@ -183,12 +235,13 @@ $\nabla_{W_1}E$ & {\color{black}four blocks, $\R^{4\times1}$} & $\delta_1X^{\top
 \section{\C{Numerical computation}}
 {\color{chg}
 \paragraph{Forward pass.}
-\[
-Z_1=\begin{pmatrix}1-2\\0+2\end{pmatrix}+\begin{pmatrix}1\\-1\end{pmatrix}=\begin{pmatrix}0\\1\end{pmatrix},\quad
-H=\begin{pmatrix}0\\1\end{pmatrix},\quad
-Y=2(0)-1(1)+0=-1,\quad
-E=\tfrac12(-1-1)^2=2.
-\]
+\begin{align*}
+Z_1&=W_1X+B_1=\begin{pmatrix}1&-1\\0&1\end{pmatrix}\begin{pmatrix}1\\2\end{pmatrix}+\begin{pmatrix}1\\-1\end{pmatrix}
+=\begin{pmatrix}-1\\2\end{pmatrix}+\begin{pmatrix}1\\-1\end{pmatrix}=\begin{pmatrix}0\\1\end{pmatrix},\\
+H&=\relu(Z_1)=\begin{pmatrix}\max(0,0)\\\max(0,1)\end{pmatrix}=\begin{pmatrix}0\\1\end{pmatrix},\\
+Y&=W_2H+B_2=\begin{pmatrix}2&-1\end{pmatrix}\begin{pmatrix}0\\1\end{pmatrix}+0=-1,\\
+E&=\tfrac12\lVert Y-Y_*\rVert^2=\tfrac12(-1-1)^2=2.
+\end{align*}
 
 \paragraph{Backward pass.}
 \[
