@@ -187,18 +187,16 @@ With $r=\relu'(Z_1)$, $\delta_2=Y-Y_*$ and $\delta_1=\Diag(r)\,W_2^{\top}\delta_
 (Y-Y_*)\,W_2\begin{bmatrix}0\\\ind\{z_{1,2}>0\}\,x_1\end{bmatrix}\\[10pt]
 (Y-Y_*)\,W_2\begin{bmatrix}0\\\ind\{z_{1,2}>0\}\,x_2\end{bmatrix}
 \end{bmatrix}
-\;\C{=\;\begin{bmatrix}(\delta_1)_1x_1\\(\delta_1)_1x_2\\(\delta_1)_2x_1\\(\delta_1)_2x_2\end{bmatrix}}
+\;\C{\to\;\begin{bmatrix}\dfrac{\partial E}{\partial w_{1,11}}&\dfrac{\partial E}{\partial w_{1,12}}\\[8pt]
+                 \dfrac{\partial E}{\partial w_{1,21}}&\dfrac{\partial E}{\partial w_{1,22}}\end{bmatrix}\in\R^{2\times2}}
 \]
 {\color{chg}
 \begin{align*}
 \nabla_{W_1}E
-&=\begin{bmatrix}\dfrac{\partial E}{\partial w_{1,11}}&\dfrac{\partial E}{\partial w_{1,12}}\\[8pt]
-                 \dfrac{\partial E}{\partial w_{1,21}}&\dfrac{\partial E}{\partial w_{1,22}}\end{bmatrix}
-&&\nabla_{W_1}E\in\R^{2\times2}\\
 &=\begin{bmatrix}(\delta_1)_1x_1&(\delta_1)_1x_2\\(\delta_1)_2x_1&(\delta_1)_2x_2\end{bmatrix}
-&&\\
+&&\frac{\partial E}{\partial w_{1,ij}}=(\delta_1)_i\,x_j\\
 &=\begin{bmatrix}(\delta_1)_1\\(\delta_1)_2\end{bmatrix}\begin{bmatrix}x_1&x_2\end{bmatrix}
-&&\\
+&&(uv^{\top})_{ij}=u_i\,v_j\\
 &=\delta_1X^{\top}\in\R^{2\times2}.
 &&
 \end{align*}
