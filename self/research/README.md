@@ -1,4 +1,4 @@
-# Research & Paper Reproductions
+# Research & Paper Reproductions (WE ARE PUSHING 'studies/' PATH FIRST - WE HOPE THAT IN 6 MONTH (2027) WE ARE PUSHING THIS BRANCH)
 
 This directory is dedicated to studying, deconstructing, and reproducing state-of-the-art (SOTA) research articles in open-pit mining optimization and operational research.
 
