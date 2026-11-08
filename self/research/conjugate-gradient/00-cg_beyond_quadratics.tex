@@ -33,13 +33,13 @@
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt]
 \item Unit labels (U5, U7, U15--U21, in particular U18 and U19) refer to the optimization agenda
 \path{master/IMCA/20262/courses/MMC007/exercises/agenda_optimizacion.pdf}.
-\item The code and experiments (\texttt{linear\_cg.py}, \texttt{P18.py}, \texttt{P20.py}) are in
+\item The code and experiments (\texttt{linear\_cg.py}, \texttt{P18.py}, \texttt{P19.py}, \texttt{P20.py}) are in
 \path{master/IMCA/20262/courses/MMC007/exercises/src/}.
 \end{itemize}
 
 
 \begin{abstract}
-Units U18--U19 of the course agenda covered linear conjugate gradient (CG) for $\min \tfrac12 x\T Ax - b\T x$ with $A\succ 0$. Experiments P18 and P20 confirmed two facts: CG terminates in at most as many steps as there are distinct eigenvalues of $A$, and its rate $2\bigl(\tfrac{\sqrt\kappa-1}{\sqrt\kappa+1}\bigr)^k$ is far better than steepest descent's $\bigl(\tfrac{\kappa-1}{\kappa+1}\bigr)^k$. This note answers \emph{whether CG can be used beyond quadratics}. The answer is yes, in three different senses: (i)~Krylov relatives of CG solve linear systems that are not symmetric positive definite; (ii)~linear CG becomes the \emph{inner solver} of Newton and trust-region methods for general smooth $f$; (iii)~\emph{nonlinear CG} (Fletcher--Reeves, Polak--Ribi\`ere, Hager--Zhang, \dots) applies the CG recurrence directly to general $f$. For each sense it states the key results, shows a small experiment, and gives an annotated reading list for when the professor's articles arrive.
+Units U18--U19 of the course agenda covered linear conjugate gradient (CG) for $\min \tfrac12 x\T Ax - b\T x$ with $A\succ 0$. Experiments P18--P20 confirmed two facts: CG terminates in at most as many steps as there are distinct eigenvalues of $A$, and its rate $2\bigl(\tfrac{\sqrt\kappa-1}{\sqrt\kappa+1}\bigr)^k$ is far better than steepest descent's $\bigl(\tfrac{\kappa-1}{\kappa+1}\bigr)^k$. This note answers \emph{whether CG can be used beyond quadratics}. The answer is yes, in three different senses: (i)~Krylov relatives of CG solve linear systems that are not symmetric positive definite; (ii)~linear CG becomes the \emph{inner solver} of Newton and trust-region methods for general smooth $f$; (iii)~\emph{nonlinear CG} (Fletcher--Reeves, Polak--Ribi\`ere, Hager--Zhang, \dots) applies the CG recurrence directly to general $f$. For each sense it states the key results, shows a small experiment, and gives an annotated reading list for when the professor's articles arrive.
 \end{abstract}
 
 \tableofcontents
@@ -47,7 +47,7 @@ Units U18--U19 of the course agenda covered linear conjugate gradient (CG) for $
 
 
 %======================================================================
-\section{Starting point: what P18 and P20 established}
+\section{Starting point: what P18--P20 established}
 %======================================================================
 
 With $r_k = Ax_k - b = \nabla f(x_k)$, the (preconditioned, $M\succ0$) linear CG implemented in \texttt{linear\_cg.py} is
@@ -61,9 +61,10 @@ r_{k+1}=r_k+\alpha_k Ap_k,\\
 p_{k+1}=-y_{k+1}+\beta_{k+1}p_k .
 \end{aligned}
 \end{equation}
-The two experiments verified:
+The three experiments verified:
 \begin{itemize}[leftmargin=1.5em]
 \item \textbf{P18} ($n=2$): CG reaches $x^*$ in $2$ steps. Steepest descent and coordinate descent zig-zag.
+\item \textbf{P19} ($A=\operatorname{diag}(1,1,10,10)$, $n=4$): CG terminates in $2$ steps, the number of \emph{distinct} eigenvalues of $A$, not $n$.
 \item \textbf{P20} ($A=\operatorname{diag}(1,12,\dots,100)$, $\kappa=100$): CG terminates at $k=10$ because $A$ has $10$ distinct eigenvalues. Before that, it follows (and beats) the bound $2(9/11)^k$. Steepest descent follows $(99/101)^k$.
 \end{itemize}
 Both facts come from one property: $x_k$ minimizes $\norm{x-x^*}_A$ over $x_0+\K_k(A,r_0)$, so
