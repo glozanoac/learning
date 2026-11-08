@@ -1,0 +1,353 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{cancel}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{parskip}
+
+\definecolor{codebg}{RGB}{24,22,33}
+\definecolor{note}{RGB}{26,95,180}
+\definecolor{remark}{RGB}{164,29,45}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\task}[3]{\par\medskip\noindent\textbf{#1}\quad\textsc{#2}\hfill\textit{#3}\par\smallskip}
+\newenvironment{statement}{\begin{quote}\small}{\end{quote}\vspace{-0.3em}\noindent\textcolor{gray}{\rule{\linewidth}{0.6pt}}\par\medskip}
+\newcommand{\console}[1]{\par\noindent\colorbox{codebg}{\parbox{\dimexpr\linewidth-2\fboxsep}{\color{white}\scriptsize\ttfamily #1}}\par}
+
+\title{U18. Conjugate directions and linear conjugate gradient}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.5cm}
+
+%==================================================================
+\task{E21}{Numerical example}{ch6, p.\ 10 (solved exercise 3)}
+\begin{statement}
+Nonzero vectors $\{p_0,\dots,p_k\}$ are $A$-conjugate if $p_i\T A p_j=0$ for all $i\neq j$.
+Let $A=\begin{pmatrix}2&1\\1&1.5\end{pmatrix}$, $p_0=(1,1)\T$ and $p_1=(1,-2)\T$.
+\begin{enumerate}[label=\alph*)]
+\item Decide whether $p_0$ and $p_1$ are $A$-conjugate.
+\item Replace $p_1$ by $\tilde p_1=p_1-\dfrac{p_1\T A p_0}{p_0\T A p_0}\,p_0$ (one Gram--Schmidt step in the inner product $\langle u,v\rangle_A=u\T A v$) and verify that $\tilde p_1=(\tfrac{15}{11},-\tfrac{18}{11})\T$ is $A$-conjugate to $p_0$.
+\end{enumerate}
+\end{statement}
+
+\textbf{(a)} Computing $p_0\T A p_1$:
+\[
+A p_1=\begin{pmatrix}2&1\\1&3/2\end{pmatrix}\begin{pmatrix}1\\-2\end{pmatrix}
+=\begin{pmatrix}0\\1-3\end{pmatrix}=\begin{pmatrix}0\\-2\end{pmatrix},
+\qquad
+p_0\T A p_1=(1,1)\begin{pmatrix}0\\-2\end{pmatrix}=-2 .
+\]
+$\therefore$ $p_0$ and $p_1$ are \emph{not} $A$-conjugate.
+
+\textbf{(b)}
+\begin{itemize}
+\item \textbf{Affirmation:} $p_0\T A\tilde p_1=0$.
+\begin{align*}
+\tilde p_1&=p_1-\frac{p_1\T A p_0}{p_0\T A p_0}\,p_0,
+\qquad
+A\tilde p_1=Ap_1-\frac{p_1\T A p_0}{p_0\T A p_0}\,Ap_0,\\
+p_0\T A\tilde p_1&=p_0\T A p_1-\frac{p_1\T A p_0}{p_0\T A p_0}\,p_0\T A p_0\\
+&=p_0\T A p_1-p_1\T A p_0 .
+\end{align*}
+Since $A=A\T$, $p_0\T A p_1=p_1\T A p_0$, so $p_0\T A\tilde p_1=0$.\\
+$\therefore$ $p_0$ and $\tilde p_1$ are $A$-conjugate.
+
+\item Computing $\tilde p_1$:
+\begin{gather*}
+p_1\T A p_0=p_0\T A p_1=-2,\qquad
+A p_0=\begin{pmatrix}2&1\\1&3/2\end{pmatrix}\begin{pmatrix}1\\1\end{pmatrix}=\begin{pmatrix}3\\5/2\end{pmatrix},\\
+p_0\T A p_0=(1,1)\begin{pmatrix}3\\5/2\end{pmatrix}=\frac{11}{2},\qquad
+\frac{p_1\T A p_0}{p_0\T A p_0}=\frac{-2}{11/2}=-\frac{4}{11}.
+\end{gather*}
+\begin{align*}
+\tilde p_1&=p_1-\frac{p_1\T A p_0}{p_0\T A p_0}\,p_0
+=(1,-2)-\Big(-\frac{4}{11}\Big)(1,1)\\
+&=\Big(1+\frac{4}{11},\,-2+\frac{4}{11}\Big)=\Big(\frac{15}{11},\,-\frac{18}{11}\Big).
+\end{align*}
+\end{itemize}
+
+%==================================================================
+\task{P17}{Practice}{added}
+\begin{statement}
+\emph{Why conjugacy matters.} Let $\varphi(x)=\tfrac12 x\T Ax-b\T x$ with $A=\begin{pmatrix}4&1\\1&3\end{pmatrix}$, $b=(1,2)\T$, $x^*=A^{-1}b=(\tfrac{1}{11},\tfrac{7}{11})\T$ and $\varphi(x^*)=-\tfrac{15}{22}$.
+In every case below, $x_{k+1}=x_k+\alpha_k p_k$ with the exact step $\alpha_k=-\dfrac{(Ax_k-b)\T p_k}{p_k\T A p_k}$, from $x_0=(0,0)\T$.
+\begin{enumerate}[label=\alph*)]
+\item Cyclic coordinate directions $p_0=e_1$, $p_1=e_2$, $p_2=e_1$, $p_3=e_2$: compute $x_1,\dots,x_4$ and the gap $\varphi(x_k)-\varphi(x^*)$. Show that $x^*$ is not reached in finitely many steps.
+\item Directions $p_0=e_1$ and $p_1=e_2-\dfrac{e_2\T Ae_1}{e_1\T Ae_1}e_1=(-\tfrac14,1)\T$: verify $p_0\T Ap_1=0$ and that $x_2=x^*$.
+\item Steepest descent, $p_k=-(Ax_k-b)$: compute $x_1,\dots,x_4$ and the gap, and verify $p_{k+1}\perp p_k$.
+\item Explain the difference between a) and b) in terms of the expansion $x^*-x_0=\sum_i\sigma_i p_i$.
+\end{enumerate}
+\end{statement}
+
+{\color{note}Computations are done on the computer. Check \textcolor{remark}{\textbf{P17.py}}
+\textcolor{green!50!black}{[Check computation with table V18, they match]}}
+
+\textbf{(a)}
+\console{%
+[ITEM A] Cyclic coordinate directions\\
+step= 0, x0=[0.000 0.000],x1=[0.250 0.000], p=[1 0], alpha=\ \ 0.250,gap= 5.568e-01, df(x0)@p=-1.00, df(x1)=[ 0.000 -1.750]\\
+step= 1, x0=[0.250 0.000],x1=[0.250 0.583], p=[0 1], alpha=\ \ 0.583,gap= 4.640e-02, df(x0)@p=-1.75, df(x1)=[0.583 0.000]\\
+step= 2, x0=[0.250 0.583],x1=[0.104 0.583], p=[1 0], alpha= -0.146,gap= 3.867e-03, df(x0)@p= 0.58, df(x1)=[-0.000 -0.146]\\
+step= 3, x0=[0.104 0.583],x1=[0.104 0.632], p=[0 1], alpha=\ \ 0.049,gap= 3.222e-04, df(x0)@p=-0.15, df(x1)=[0.049 0.000]\\
+step= 4, x0=[0.104 0.632],x1=[0.092 0.632], p=[1 0], alpha= -0.012,gap= 2.685e-05, df(x0)@p= 0.05, df(x1)=[-0.000 -0.012]\\
+step= 5, x0=[0.092 0.632],x1=[0.092 0.636], p=[0 1], alpha=\ \ 0.004,gap= 2.238e-06, df(x0)@p=-0.01, df(x1)=[0.004 0.000]\\
+step= 6, x0=[0.092 0.636],x1=[0.091 0.636], p=[1 0], alpha= -0.001,gap= 1.865e-07, df(x0)@p= 0.00, df(x1)=[ 0.000 -0.001]\\
+step= 7, x0=[0.091 0.636],x1=[0.091 0.636], p=[0 1], alpha=\ \ 0.000,gap= 1.554e-08, df(x0)@p=-0.00, df(x1)=[0.000 0.000]}
+
+\begin{itemize}[leftmargin=7.5em]
+\item[(gap)] $\varphi(x_k)-\varphi(x^*)\to 0$.
+\item[(direction)] \texttt{df(x0)@p} is $\nabla\varphi(x_k)\T p_k$. We have $\nabla\varphi(x_k)\T p_k>0$ for $k=2,4$: $p_k$ is not a descent direction.
+\end{itemize}
+{\color{remark}Why $\|\nabla\varphi(x_k)\|\to 0$? \quad $\nabla\varphi(x_k)$ is \texttt{df(x1)} on the console.}
+
+\textbf{(b)}
+\console{%
+[ITEM B] Conjugated directions\\
+step= 0, x0=[0.000 0.000],x1=[0.250 0.000], p=[1.000 0.000], alpha=\ \ 0.250,gap= 5.568e-01, df(x0)@p=-1.00, df(x1)=[ 0.000 -1.750]\\
+step= 1, x0=[0.250 0.000],x1=[0.091 0.636], p=[-0.250\ \ 1.000], alpha=\ \ 0.636,\textcolor{red!70}{\underline{gap= 0.000e+00}}, df(x0)@p=-1.75, \textcolor{red!70}{\underline{df(x1)=[0.000 0.000]}}\\
+xn=[0.091 0.636], ||xn-x*||=\textcolor{red!70}{\underline{0.0}}}
+
+\[
+x_n=x^*,\qquad n=2.
+\]
+
+\textbf{(c)}
+\console{%
+[ITEM C] Steepest descent directions\\
+step= 4, x0=[0.000 0.000],x1=[0.250 0.500], p=p1=[1.000 2.000], p1@p0=0.0 , alpha=\ \ 0.250,gap= 5.682e-02, df(x0)@p1=-5.00, df(x1)=[ 0.500 -0.250]\\
+step= 3, x0=[0.250 0.500],x1=[0.083 0.583], p=p1=[-0.500\ \ 0.250], p1@p0=0.0 , alpha=\ \ 0.333,gap= 4.735e-03, df(x0)@p1=-0.31, df(x1)=[-0.083 -0.167]\\
+step= 2, x0=[0.083 0.583],x1=[0.104 0.625], p=p1=[0.083 0.167], p1@p0=-2.9802322387695312e-08 , alpha=\ \ 0.250,gap= 3.946e-04, df(x0)@p1=-0.03, df(x1)=[ 0.042 -0.021]\\
+step= 1, x0=[0.104 0.625],x1=[0.090 0.632], p=p1=[-0.042\ \ 0.021], p1@p0=4.7031790018081665e-08 , alpha=\ \ 0.333,gap= 3.284e-05, df(x0)@p1=-0.00, df(x1)=[-0.007 -0.014]\\
+step= 0, x0=[0.090 0.632],x1=[0.092 0.635], p=p1=[0.007 0.014], p1@p0=-3.3178366720676422e-09 , alpha=\ \ 0.250,gap= 2.736e-06, df(x0)@p1=-0.00, df(x1)=[ 0.003 -0.002]\\
+xn=[0.092 0.635], ||xn-x*||=0.0014551187884905695}
+
+We observe $p_k\T p_{k-1}\approx 0$ (\texttt{p1@p0}).
+
+Since $p_k=-\nabla f(x_k)$, we confirm
+\[
+\nabla f(x_k)\T p_k=\texttt{df(x0)@p1}<0,
+\]
+so $p_k$ is a descent direction.
+
+\textbf{(d)} For (b), $\sigma_i=\alpha_i$; that is why (b) reaches $x^*$ after at most $n$ steps.
+That is not the case for (a): $p_i$ and $p_j$ are not $A$-conjugate.
+
+%==================================================================
+\task{T49}{Proof}{ch6, Theorem 2.1, pp.\ 2--3}
+\begin{statement}
+\emph{Setting.} Let $\varphi(x)=\tfrac12x\T Ax-b\T x$ with $A\in\mathbb R^{n\times n}$ symmetric positive definite, $x^*=A^{-1}b$, and residual $r_k=Ax_k-b=\nabla\varphi(x_k)$.\\
+\emph{Problem.} Let $p_0,\dots,p_{n-1}$ be nonzero and $A$-conjugate ($p_i\T Ap_j=0$ for $i\neq j$), $x_0\in\mathbb R^n$ arbitrary, and $x_{k+1}=x_k+\alpha_kp_k$ with $\alpha_k=-\dfrac{r_k\T p_k}{p_k\T Ap_k}$.
+\begin{enumerate}[label=\alph*)]
+\item Prove that $p_0,\dots,p_{n-1}$ are linearly independent.
+\item Prove that $\alpha_k$ is the exact minimizer of $\alpha\mapsto\varphi(x_k+\alpha p_k)$.
+\item Prove that $r_k\T p_i=0$ for all $i<k$, and that $x_n=x^*$.
+\end{enumerate}
+\textbf{Note.} The notes use $\{p_i\}$ as a basis without proving linear independence (part a), which is what makes the expansion $x^*-x_0=\sum_i\sigma_ip_i$ possible.
+\end{statement}
+
+\textbf{(a)} Let's suppose that $\{p_0,\dots,p_{n-1}\}$ are linearly dependent
+\[
+\Rightarrow\ \exists\,k\in\{0,\dots,n-1\}\ \text{and}\ \alpha_j,\ j\neq k,\ \text{such that}\quad
+p_k=\sum_{j\neq k}\alpha_jp_j .
+\]
+Select $i\in\{0,\dots,n-1\}$, $i\neq k$:
+\[
+p_i\T Ap_k=\sum_{j\neq k}\alpha_j\,p_i\T Ap_j .
+\]
+Since $\{p_0,\dots,p_{n-1}\}$ are $A$-conjugate,
+\[
+\Rightarrow\quad 0=\alpha_i\,p_i\T Ap_i .
+\]
+Since $A\succ0$ and $p_i\neq0$ $\Rightarrow$ $p_i\T Ap_i>0$
+\[
+\Rightarrow\ \alpha_i=0,\ i\neq k\ \Rightarrow\ p_k=0\quad(\Rightarrow\!\Leftarrow).
+\]
+$\therefore$ $\{p_0,\dots,p_{n-1}\}$ are linearly independent.
+
+\textbf{(b)} $\alpha_k$ minimizer of $h(\alpha)=\varphi(x_k+\alpha p_k)$ means $h'(\alpha_k)=0$.
+\begin{itemize}
+\item Computing $h'(\alpha)=\varphi'(x_k+\alpha p_k)\T p_k$. We know $\varphi'(x)=Ax-b$
+$\Rightarrow$ $\varphi'(x_k+\alpha p_k)=A(x_k+\alpha p_k)-b$.
+\begin{align*}
+\Rightarrow\ h'(\alpha)&=[A(x_k+\alpha p_k)-b]\T p_k
+=p_k\T A(x_k+\alpha p_k)-p_k\T b\\
+h'(\alpha)&=p_k\T\underbrace{(Ax_k-b)}_{r_k}+\alpha\,p_k\T Ap_k\\
+h'(\alpha_k)&=p_k\T r_k+\Big(-\frac{r_k\T p_k}{p_k\T Ap_k}\Big)p_k\T Ap_k\\
+&=p_k\T r_k-r_k\T p_k=0 .
+\end{align*}
+$\therefore$ $\alpha_k$ is a critical point of $h$.
+
+But $h''(\alpha)=A\succ0$.\\
+$\therefore$ $\alpha_k$ is the unique minimizer of $h$.
+\end{itemize}
+
+\textbf{(c)} \textsc{Check notes}.
+
+%==================================================================
+\task{P18}{Practice}{added}
+\begin{statement}
+\emph{Definitions.}
+\begin{itemize}
+\item \emph{Linear CG:} $r_0=Ax_0-b$, $p_0=-r_0$ and, for $k\ge0$, $\alpha_k=\dfrac{r_k\T r_k}{p_k\T Ap_k}$, $x_{k+1}=x_k+\alpha_kp_k$, $r_{k+1}=r_k+\alpha_kAp_k$, $\beta_{k+1}=\dfrac{r_{k+1}\T r_{k+1}}{r_k\T r_k}$, $p_{k+1}=-r_{k+1}+\beta_{k+1}p_k$.
+\end{itemize}
+\emph{Problem.} \emph{Linear CG by hand.} Same data as E23: $A=\begin{pmatrix}4&1\\1&3\end{pmatrix}$, $b=(1,2)\T$, $x_0=(0,0)\T$.
+\begin{enumerate}[label=\alph*)]
+\item Complete the second iteration: $\beta_1$, $p_1$, $Ap_1$, $\alpha_1$, $x_2$, $r_2$.
+\item Verify $r_1\T p_0=0$, $p_1\T Ap_0=0$, $r_2=0$ and $x_2=A^{-1}b$.
+\item Steepest descent with exact step from the same $x_0$ takes the same first step. Explain which ingredient of CG makes the second step reach $x^*$ (compare with V18 c).
+\end{enumerate}
+\end{statement}
+
+\textbf{(a)}
+\[
+x_0=0,\qquad r_0=Ax_0-b=-b=(-1,-2),\qquad p_0=-r_0=(1,2).
+\]
+
+\emph{Iteration 1.}
+\begin{gather*}
+r_0\T r_0=1+4=5,\qquad
+Ap_0=\begin{pmatrix}4&1\\1&3\end{pmatrix}\begin{pmatrix}1\\2\end{pmatrix}=\begin{pmatrix}6\\7\end{pmatrix},\qquad
+p_0\T Ap_0=(1,2)\begin{pmatrix}6\\7\end{pmatrix}=20,\\
+\alpha_0=\frac{r_0\T r_0}{p_0\T Ap_0}=\frac{5}{20}=\frac14,\\
+x_1=x_0+\alpha_0p_0=0+\Big(\frac14\Big)\begin{pmatrix}1\\2\end{pmatrix}=\begin{pmatrix}1/4\\1/2\end{pmatrix},\\
+r_1=r_0+\alpha_0Ap_0=(-1,-2)+\Big(\frac14\Big)\begin{pmatrix}6\\7\end{pmatrix}
+=\begin{pmatrix}-1+3/2\\-2+7/4\end{pmatrix}=\begin{pmatrix}1/2\\-1/4\end{pmatrix},\\
+r_0\T r_1=(-1,-2)\begin{pmatrix}1/2\\-1/4\end{pmatrix}=-\frac12+\frac12=0,\\
+r_1\T r_1=\frac14+\frac1{16}=\frac{5}{16},\qquad r_0\T r_0=5,\qquad
+\beta_1=\frac{r_1\T r_1}{r_0\T r_0}=\frac{5/16}{5}=\frac1{16},\\
+p_1=-r_1+\beta_1p_0=\Big(-\frac12,\frac14\Big)+\frac1{16}(1,2)
+=\Big(-\frac12+\frac1{16},\ \frac14+\frac18\Big)=\Big(-\frac7{16},\ \frac38\Big),\\
+p_1\T Ap_0=p_1\T\begin{pmatrix}4&1\\1&3\end{pmatrix}\begin{pmatrix}1\\2\end{pmatrix}
+=\Big(-\frac7{16},\frac38\Big)\begin{pmatrix}6\\7\end{pmatrix}
+=-\frac{7\cdot6}{16}+\frac{3\cdot7}{8}\\
+=-\frac{21}{8}+\frac{21}{8}=0 .
+\end{gather*}
+
+\emph{Iteration 2.}
+\begin{gather*}
+r_1\T r_1=\frac5{16},\qquad
+Ap_1=\begin{pmatrix}4&1\\1&3\end{pmatrix}\begin{pmatrix}-7/16\\3/8\end{pmatrix}
+=\begin{pmatrix}-7/4+3/8\\-7/16+9/8\end{pmatrix}=\begin{pmatrix}-11/8\\11/16\end{pmatrix},\\
+p_1\T Ap_1=\Big(-\frac7{16},\frac38\Big)\begin{pmatrix}-11/8\\11/16\end{pmatrix}
+=\frac{77}{16\cdot8}+\frac{33}{8\cdot16}=\frac{110}{16\cdot8}=\frac{55}{64},\\
+\alpha_1=\frac{r_1\T r_1}{p_1\T Ap_1}=\frac{5/16}{55/64}=\frac4{11},
+\end{gather*}
+\begin{align*}
+x_2&=x_1+\alpha_1p_1=\Big(\frac14,\frac12\Big)+\frac4{11}\Big(-\frac7{16},\frac38\Big)
+=\Big(\frac14-\frac7{44},\ \frac12+\frac3{22}\Big)
+=\Big(\frac4{44},\ \frac{14}{22}\Big),\\
+x_2&=\Big(\frac1{11},\ \frac7{11}\Big).
+\end{align*}
+\begin{itemize}
+\item \(\displaystyle Ax_2-b=\begin{pmatrix}4&1\\1&3\end{pmatrix}\begin{pmatrix}1/11\\7/11\end{pmatrix}-\begin{pmatrix}1\\2\end{pmatrix}
+=\Big(\frac{11}{11}-1,\ \frac{22}{11}-2\Big)=0\)
+\quad $\therefore$ $x_2=x^*$.
+\end{itemize}
+\begin{align*}
+r_2&=Ax_2-b=0=r_1+\alpha_1Ap_1
+=\Big(\frac12,-\frac14\Big)+\frac4{11}\Big(-\frac{11}8,\ \frac{11}{16}\Big)
+=\Big(\frac12,-\frac14\Big)+\Big(-\frac12,\ \frac14\Big)=0,\\
+\beta_2&=\frac{r_2\T r_2}{r_1\T r_1}=0\ \Rightarrow\ p_2=-r_2+\beta_2p_1=-0+0\,p_1=0 .
+\end{align*}
+
+\console{%
+(env) [glozanoac@bell src]\$ python3 linear\_cg.py\\
+{}[k=10] r=[ 0.500 -0.250], p=[-0.438\ \ 0.375], beta=\ \ \ \ \ 0.062\\
+{}[k=9] r=[0.000 0.000], p=[-0.000\ \ 0.000], beta=\ \ \ \ \ 0.000\\
+{}[0.091 0.636] 1\\
+(env) [glozanoac@bell src]\$}
+
+{\color{note}Algorithm implemented in \textcolor{remark}{\textbf{linear\_cg.py}} and \textcolor{remark}{\textbf{P18.py}}}
+
+%==================================================================
+\task{T50}{Proof}{ch6, Lemma 2.1, p.\ 3}
+\begin{statement}
+\emph{Setting.} Let $\varphi(x)=\tfrac12x\T Ax-b\T x$ with $A\in\mathbb R^{n\times n}$ symmetric positive definite, $x^*=A^{-1}b$, and residual $r_k=Ax_k-b=\nabla\varphi(x_k)$. $x_k\in\mathbb R^n$, $p_k\neq0$, $\alpha_k$ the minimizer of $\alpha\mapsto\varphi(x_k+\alpha p_k)$, and $x_{k+1}=x_k+\alpha_kp_k$.\\
+\emph{Problem.}
+\begin{enumerate}[label=\alph*)]
+\item Prove that $\alpha_k=-\dfrac{r_k\T p_k}{p_k\T Ap_k}$.
+\item Prove that $r_{k+1}=r_k+\alpha_kAp_k$ and $r_{k+1}\T p_k=0$.
+\end{enumerate}
+\end{statement}
+
+\textbf{(a)} Done in T49 (b).
+
+\textbf{(b)}
+\begin{itemize}
+\item \textbf{Affirmation:} $r_{k+1}=r_k+\alpha_kAp_k$.
+\begin{align*}
+x_{k+1}&=x_k+\alpha_kp_k\\
+Ax_{k+1}&=Ax_k+\alpha_kAp_k\\
+Ax_{k+1}-b&=(Ax_k-b)+\alpha_kAp_k\\
+r_{k+1}&=r_k+\alpha_kAp_k .
+\end{align*}
+\item \textbf{Affirmation:} $r_{k+1}\T p_k=0$.
+\begin{align*}
+r_{k+1}&=r_k+\alpha_kAp_k\\
+p_k\T r_{k+1}&=p_k\T r_k+\alpha_k\,p_k\T Ap_k\\
+&=p_k\T r_k+\Big(-\frac{r_k\T p_k}{p_k\T Ap_k}\Big)p_k\T Ap_k\\
+&=p_k\T r_k-r_k\T p_k .
+\end{align*}
+But $\mathbb R\ni p_k\T r_k=(p_k\T r_k)\T=r_k\T p_k$
+\[
+\Rightarrow\ p_k\T r_{k+1}=0 .
+\]
+\end{itemize}
+
+%==================================================================
+\task{T51}{Proof}{ch6, Lemma 2.3, pp.\ 5--6}
+\begin{statement}
+\emph{Setting.} Let $\varphi(x)=\tfrac12x\T Ax-b\T x$ with $A\in\mathbb R^{n\times n}$ symmetric positive definite, $x^*=A^{-1}b$, and residual $r_k=Ax_k-b=\nabla\varphi(x_k)$.\\
+\emph{Definitions.}
+\begin{itemize}
+\item \emph{Linear CG:} $r_0=Ax_0-b$, $p_0=-r_0$ and, for $k\ge0$, $\alpha_k=\dfrac{r_k\T r_k}{p_k\T Ap_k}$, $x_{k+1}=x_k+\alpha_kp_k$, $r_{k+1}=r_k+\alpha_kAp_k$, $\beta_{k+1}=\dfrac{r_{k+1}\T r_{k+1}}{r_k\T r_k}$, $p_{k+1}=-r_{k+1}+\beta_{k+1}p_k$.
+\end{itemize}
+\emph{Problem.} Assume $r_0,r_1\neq0$. Prove that $p_0\T Ap_1=0$.
+
+\textbf{Note.} The notes write $r_0\T Ap_0=\frac{r_0\T r_0}{\alpha_0}$; the correct value is $r_0\T Ap_0=\frac{r_0\T r_1-r_0\T r_0}{\alpha_0}=-\frac{r_0\T r_0}{\alpha_0}$. With the right sign, $p_0\T Ap_0=-r_0\T Ap_0=\frac{\|r_0\|^2}{\alpha_0}$ and $p_0\T Ap_1=-\frac{\|r_1\|^2}{\alpha_0}+\beta_1\frac{\|r_0\|^2}{\alpha_0}=0$.
+\end{statement}
+
+\begin{align*}
+p_0\T Ap_1&=p_0\T A(-r_1+\beta_1p_0)\\
+&=-p_0\T Ar_1+\beta_1\,p_0\T Ap_0\\
+&=-r_1\T Ap_0+\beta_1\,p_0\T Ap_0 .
+\end{align*}
+{\color{green!50!black}
+\[
+r_1=r_0+\alpha_0Ap_0,\qquad Ap_0=\frac{r_1-r_0}{\alpha_0}
+\]}
+\begin{align*}
+p_0\T Ap_1&=-r_1\T\Big(\frac{r_1-r_0}{\alpha_0}\Big)+\beta_1(-r_0)\T\Big(\frac{r_1-r_0}{\alpha_0}\Big)\\
+&=-\frac{r_1\T r_1+r_1\T r_0}{\alpha_0}+\frac{\beta_1}{\alpha_0}\big(-r_0\T r_1+r_0\T r_0\big).
+\end{align*}
+
+{\color{orange!85!black}
+\textbf{Affirmation:} $r_1\T r_0=0$.
+\begin{align*}
+r_1\T r_0=r_0\T r_1&=r_0\T(r_0+\alpha_0Ap_0)\\
+&=r_0\T r_0+\alpha_0(-p_0)\T Ap_0\\
+&=r_0\T r_0+\Big(\frac{r_0\T r_0}{p_0\T Ap_0}\Big)\big(-p_0\T Ap_0\big)\\
+&=r_0\T r_0-r_0\T r_0=0 .
+\end{align*}}
+
+\begin{align*}
+\Rightarrow\ p_0\T Ap_1&=-\frac{r_1\T r_1}{\alpha_0}+\frac{\beta_1}{\alpha_0}\big(+r_0\T r_0\big)
+\end{align*}
+{\color{green!50!black}
+\[
+\alpha_0=\frac{r_0\T r_0}{p_0\T Ap_0},\qquad \beta_1=\frac{r_1\T r_1}{r_0\T r_0}
+\]}
+\begin{align*}
+p_0\T Ap_1&=-\frac{r_1\T r_1}{\alpha_0}+\Big(\frac{r_1\T r_1}{r_0\T r_0}\Big)\Big(\frac{r_0\T r_0}{\alpha_0}\Big)\\
+&=-\frac{r_1\T r_1}{\alpha_0}+\frac{r_1\T r_1}{\alpha_0}=0 .
+\end{align*}
+$\therefore$ $p_0$ and $p_1$ are $A$-conjugate.
+
+\end{document}
