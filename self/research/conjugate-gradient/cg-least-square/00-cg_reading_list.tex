@@ -1,0 +1,98 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\setlist{itemsep=3pt}
+
+\title{Reading List: From Linear Conjugate Gradient to Modern Least-Squares Solvers}
+\author{Gustavo Lozano}
+\date{November 2026}
+
+\begin{document}
+\maketitle
+
+\noindent Read in this order. Each entry says what the paper contributes and what to reproduce from it.
+
+\section{Linear conjugate gradient}
+\begin{enumerate}
+\item \textbf{M.~R.~Hestenes, E.~Stiefel.} Methods of conjugate gradients for solving linear systems. \emph{J.\ Res.\ Nat.\ Bur.\ Standards} 49(6):409--436, 1952.\\
+The original CG. Reproduce: conjugacy, finite termination, minimization property. §10 already gives CG for least squares without forming $J^TJ$.
+
+\item \textbf{C.~Lanczos.} Solution of systems of linear equations by minimized iterations. \emph{J.\ Res.\ Nat.\ Bur.\ Standards} 49(1):33--53, 1952.\\
+The parallel Lanczos view of the same Krylov process; needed later for Golub--Kahan.
+
+\item \textbf{J.~K.~Reid.} On the method of conjugate gradients for the solution of large sparse systems of linear equations. In \emph{Large Sparse Sets of Linear Equations}, Academic Press, 231--254, 1971.\\
+CG revived as an \emph{iterative} method (stop well before $n$ steps).
+
+\item \textbf{G.~H.~Golub, D.~P.~O'Leary.} Some history of the conjugate gradient and Lanczos algorithms: 1948--1976. \emph{SIAM Review} 31(1):50--102, 1989.\\
+Map of the early literature; use it to place every other paper.
+
+\item \textbf{A.~Greenbaum.} Behavior of slightly perturbed Lanczos and conjugate-gradient recurrences. \emph{Linear Algebra Appl.} 113:7--63, 1989; and \textbf{A.~Greenbaum, Z.~Strakoš.} Predicting the behavior of finite precision Lanczos and conjugate gradient computations. \emph{SIAM J.\ Matrix Anal.\ Appl.} 13(1):121--137, 1992.\\
+Why CG in floating point loses orthogonality and is delayed but still converges.
+
+\item \textbf{G.~Meurant, Z.~Strakoš.} The Lanczos and conjugate gradient algorithms in finite precision arithmetic. \emph{Acta Numerica} 15:471--542, 2006.\\
+Survey of the finite-precision theory; reproduce the delay of convergence.
+\end{enumerate}
+
+\section{CG for linear least squares}
+\begin{enumerate}[resume]
+\item \textbf{G.~H.~Golub.} Numerical methods for solving linear least squares problems. \emph{Numer.\ Math.} 7:206--216, 1965.\\
+Why the normal equations ($\kappa(J)^2$) should be avoided; QR as the reference method.
+
+\item \textbf{G.~H.~Golub, W.~Kahan.} Calculating the singular values and pseudo-inverse of a matrix. \emph{SIAM J.\ Numer.\ Anal.\ Ser.~B} 2(2):205--224, 1965.\\
+The bidiagonalization that LSQR and LSMR are built on.
+
+\item \textbf{C.~C.~Paige.} Bidiagonalization of matrices and solution of linear equations. \emph{SIAM J.\ Numer.\ Anal.} 11:197--209, 1974.\\
+First use of Golub--Kahan bidiagonalization to solve systems; precursor of LSQR.
+
+\item \textbf{G.~W.~Stewart.} Research, development, and LINPACK. In \emph{Mathematical Software III}, Academic Press, 1--14, 1977.\\
+Backward error of an approximate least-squares solution, $\|E\|=\|J^Tr\|/\|r\|$; the basis of the LSQR stopping rules.
+
+\item \textbf{C.~C.~Paige, M.~A.~Saunders.} LSQR: an algorithm for sparse linear equations and sparse least squares. \emph{ACM Trans.\ Math.\ Softw.} 8(1):43--71, 1982.\\
+\textbf{Central paper.} Reproduce: equivalence with CGLS, the Givens-rotation implementation, the estimates of $\|J\|$ and $\kappa(J)$, and the stopping rules.
+
+\item \textbf{Å.~Björck, T.~Elfving, Z.~Strakoš.} Stability of conjugate gradient and Lanczos methods for linear least squares problems. \emph{SIAM J.\ Matrix Anal.\ Appl.} 19(3):720--736, 1998. doi:10.1137/S089547989631202X.\\
+Which of the algebraically equivalent CGLS implementations is accurate in floating point, and how CGLS compares with LSQR.
+
+\item \textbf{X.-W.~Chang, C.~C.~Paige, D.~Titley-Peloquin.} Stopping criteria for the iterative solution of linear least squares problems. \emph{SIAM J.\ Matrix Anal.\ Appl.} 31:831--852, 2009.\\
+Refined backward-error stopping rules.
+
+\item \textbf{D.~C.-L.~Fong, M.~A.~Saunders.} LSMR: an iterative algorithm for sparse least-squares problems. \emph{SIAM J.\ Sci.\ Comput.} 33(5):2950--2971, 2011. arXiv:1006.0758.\\
+MINRES on the normal equations; $\|J^Tr_k\|$ decreases monotonically. Reproduce the comparison with LSQR.
+
+\item \textbf{R.~Estrin, D.~Orban, M.~A.~Saunders.} LSLQ: an iterative method for linear least-squares with an error minimization property. \emph{SIAM J.\ Matrix Anal.\ Appl.} 40(1):254--275, 2019.\\
+Third member of the family: minimizes the error and gives error estimates.
+\end{enumerate}
+
+\section{Randomized preconditioning (current research)}
+\begin{enumerate}[resume]
+\item \textbf{V.~Rokhlin, M.~Tygert.} A fast randomized algorithm for overdetermined linear least-squares regression. \emph{Proc.\ Natl.\ Acad.\ Sci.\ USA} 105(36):13212--13217, 2008.\\
+First sketch-and-precondition solver.
+
+\item \textbf{H.~Avron, P.~Maymounkov, S.~Toledo.} Blendenpik: supercharging LAPACK's least-squares solver. \emph{SIAM J.\ Sci.\ Comput.} 32(3):1217--1236, 2010. doi:10.1137/090767911.\\
+Practical sketch preconditioner + LSQR; reproduce the condition number of $JR^{-1}$.
+
+\item \textbf{X.~Meng, M.~A.~Saunders, M.~W.~Mahoney.} LSRN: a parallel iterative solver for strongly over- or underdetermined systems. \emph{SIAM J.\ Sci.\ Comput.} 36(2):C95--C118, 2014.\\
+Gaussian-sketch preconditioner with guaranteed condition number; parallel version.
+
+\item \textbf{M.~Meier, Y.~Nakatsukasa, A.~Townsend, M.~Webb.} Are sketch-and-precondition least squares solvers numerically stable? \emph{SIAM J.\ Matrix Anal.\ Appl.} 45(2):905--929, 2024. arXiv:2302.07202.\\
+Shows Blendenpik/LSRN with zero initial guess are unstable; recommends the sketch-and-solve start.
+
+\item \textbf{E.~N.~Epperly.} Fast and forward stable randomized algorithms for linear least-squares problems. \emph{SIAM J.\ Matrix Anal.\ Appl.} 45:1782--1804, 2024. doi:10.1137/23M1616790.\\
+Proves forward stability of the corrected method.
+
+\item \textbf{E.~N.~Epperly, M.~Meier, Y.~Nakatsukasa.} Fast randomized least-squares solvers can be just as accurate and stable as classical direct solvers. \emph{Comm.\ Pure Appl.\ Math.} 79(2):293--339, 2026. arXiv:2406.03468.\\
+Backward stable randomized solvers (SPIR, FOSSILS): the current state of the art.
+\end{enumerate}
+
+\section{Reference books}
+\begin{itemize}
+\item J.~Nocedal, S.~J.~Wright. \emph{Numerical Optimization}, 2nd ed., Springer, 2006, Ch.~5 (linear CG).
+\item Å.~Björck. \emph{Numerical Methods for Least Squares Problems}, SIAM, 1996 (normal equations, QR, CGLS, LSQR).
+\item N.~J.~Higham. \emph{Accuracy and Stability of Numerical Algorithms}, 2nd ed., SIAM, 2002, Ch.~20 (least-squares error analysis).
+\item J.~Liesen, Z.~Strakoš. \emph{Krylov Subspace Methods: Principles and Analysis}, Oxford University Press, 2013.
+\item Y.~Saad. \emph{Iterative Methods for Sparse Linear Systems}, 2nd ed., SIAM, 2003.
+\end{itemize}
+
+\end{document}
