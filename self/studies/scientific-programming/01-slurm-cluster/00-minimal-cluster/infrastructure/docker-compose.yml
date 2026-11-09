@@ -1,0 +1,42 @@
+# Simulated "machines" for the Slurm playbooks: two plain Ubuntu 24.04
+# servers on a private network. Nothing Slurm-related is in the image;
+# Ansible (run from your machine) provisions them over SSH.
+#
+#   slurmctl  - controller (slurmctld)   ssh -p 2221 root@127.0.0.1
+#   c1        - compute node (slurmd)    ssh -p 2222 root@127.0.0.1
+#
+# SSH ports are published on localhost so this works the same on Linux,
+# macOS and Windows. Create infrastructure/ssh/id_ed25519 first (see README); its
+# public half is authorized for root on every node.
+
+name: slurm-sim
+
+x-node: &node
+  build:
+    context: ./node
+  image: slurm-sim/node:24.04
+  privileged: true          # systemd as PID 1 needs it
+  cgroup: host
+  tmpfs:
+    - /run
+    - /run/lock
+  volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    - ./ssh/id_ed25519.pub:/keys/authorized_keys:ro
+  networks: [cluster]
+  restart: unless-stopped
+
+services:
+  slurmctl:
+    <<: *node
+    hostname: slurmctl
+    ports: ["127.0.0.1:2221:22"]
+
+  c1:
+    <<: *node
+    hostname: c1
+    ports: ["127.0.0.1:2222:22"]
+
+networks:
+  cluster:
+    driver: bridge

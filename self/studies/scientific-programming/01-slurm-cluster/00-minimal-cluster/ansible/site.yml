@@ -1,0 +1,60 @@
+---
+# Provision a Slurm cluster: controller (slurmctld) + compute node(s) (slurmd).
+# Order follows the Slurm Quick Start: users/clocks -> MUNGE -> config -> daemons.
+
+- name: Wait until every node is reachable
+  hosts: slurm_cluster
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+
+- name: Base OS, MUNGE and cluster users on every node
+  hosts: slurm_cluster
+  roles:
+    - common
+    - munge
+    - slurm_users
+
+- name: Install slurmd and detect compute hardware (slurmd -C)
+  hosts: slurm_compute
+  tasks:
+    - name: Detect hardware
+      ansible.builtin.include_role:
+        name: slurmd
+        tasks_from: detect
+
+- name: Deploy identical slurm.conf everywhere
+  hosts: slurm_cluster
+  roles:
+    - slurm_config
+
+- name: Controller
+  hosts: slurm_controller
+  roles:
+    - slurmctld
+
+- name: Compute nodes
+  hosts: slurm_compute
+  roles:
+    - slurmd
+
+- name: Smoke test - run a job on every compute node as a regular user
+  hosts: "{{ groups['slurm_controller'][0] }}"
+  gather_facts: false
+  roles:
+    - slurm_defaults
+  tasks:
+    - name: srun hostname
+      become: true
+      become_user: "{{ slurm_cluster_users[0].name }}"
+      ansible.builtin.command: >-
+        srun --nodes={{ groups['slurm_compute'] | length }}
+        --ntasks-per-node=1 --time=00:01:00 --chdir=/tmp hostname
+      register: smoke
+      changed_when: false
+
+    - name: Result
+      ansible.builtin.debug:
+        msg: "Job ran on: {{ smoke.stdout_lines | sort | join(', ') }}"

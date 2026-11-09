@@ -1,0 +1,38 @@
+---
+# Install slurmd and read the node's real hardware with `slurmd -C`
+# (the method recommended by the Slurm docs to build NodeName lines).
+# The result is stored as the fact `slurm_node_hw` and consumed by slurm.conf.
+
+- name: Install slurmd and job build/runtime packages
+  ansible.builtin.apt:
+    name: "{{ ['slurmd'] + slurm_compute_packages }}"
+    state: present
+
+- name: Detect node hardware
+  ansible.builtin.command: slurmd -C
+  register: slurmd_c
+  changed_when: false
+
+- name: Parse detected hardware
+  vars:
+    hw: "{{ dict(slurmd_c.stdout_lines[0] | regex_findall('(\\w+)=(\\S+)')) }}"
+    mem_avail: "{{ hw.RealMemory | int - slurm_node_mem_reserve_mb | int }}"
+    capped_cpus: >-
+      {{ (slurm_node_max_cpus | int > 0) and (hw.CPUs | int > slurm_node_max_cpus | int) }}
+  ansible.builtin.set_fact:
+    slurm_node_hw:
+      name: "{{ hw.NodeName }}"
+      cpus: "{{ [hw.CPUs | int, slurm_node_max_cpus | int] | min if capped_cpus | bool else hw.CPUs | int }}"
+      # Topology is only reported when the CPU count is not capped,
+      # otherwise it would contradict the advertised CPUs.
+      topology: >-
+        {{ '' if capped_cpus | bool else
+           'Boards=' ~ hw.Boards ~ ' SocketsPerBoard=' ~ hw.SocketsPerBoard ~
+           ' CoresPerSocket=' ~ hw.CoresPerSocket ~ ' ThreadsPerCore=' ~ hw.ThreadsPerCore }}
+      memory: >-
+        {{ [mem_avail | int, slurm_node_max_memory_mb | int] | min
+           if slurm_node_max_memory_mb | int > 0 else mem_avail | int }}
+
+- name: Show detected hardware
+  ansible.builtin.debug:
+    msg: "{{ slurmd_c.stdout_lines[0] }}  ->  {{ slurm_node_hw }}"

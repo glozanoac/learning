@@ -1,0 +1,47 @@
+---
+# Base OS preparation shared by every node (Quick Start "prerequisites").
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: [acl, sudo, hwloc]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install and enable chrony (MUNGE requires synchronized clocks)
+  when: common_install_time_sync | bool
+  block:
+    - name: Install chrony
+      ansible.builtin.apt:
+        name: chrony
+        state: present
+    - name: Enable chrony
+      ansible.builtin.systemd_service:
+        name: chrony
+        state: started
+        enabled: true
+
+- name: Make every cluster node resolvable via /etc/hosts
+  when: common_manage_etc_hosts | bool
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '\s{{ hostvars[item].ansible_hostname }}$'
+    line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ hostvars[item].ansible_fqdn }} {{ hostvars[item].ansible_hostname }}"
+    unsafe_writes: true
+  loop: "{{ groups['slurm_cluster'] }}"
+
+- name: Create Slurm group with a fixed GID
+  ansible.builtin.group:
+    name: "{{ slurm_user }}"
+    gid: "{{ slurm_gid }}"
+    system: true
+
+- name: Create SlurmUser with a fixed UID (before packages create it)
+  ansible.builtin.user:
+    name: "{{ slurm_user }}"
+    uid: "{{ slurm_uid }}"
+    group: "{{ slurm_user }}"
+    system: true
+    home: /nonexistent
+    create_home: false
+    shell: /usr/sbin/nologin

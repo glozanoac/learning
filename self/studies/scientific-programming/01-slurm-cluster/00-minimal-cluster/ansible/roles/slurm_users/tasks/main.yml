@@ -1,0 +1,32 @@
+---
+# Regular (non-root) accounts that submit jobs. Slurm runs each job as its
+# owner on the compute node, so the account must exist there with the same
+# UID/GID as on the node where it was submitted.
+# (On larger clusters these usually come from LDAP/SSSD instead.)
+
+- name: Create user groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid | default(item.uid) }}"
+  loop: "{{ slurm_cluster_users }}"
+
+- name: Create users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    group: "{{ item.name }}"
+    shell: /bin/bash
+    create_home: true
+  loop: "{{ slurm_cluster_users }}"
+
+# Ansible's working directory for tasks run as these users (become_user).
+# Creating it here with the right owner avoids the "remote_tmp did not
+# exist" warning on the first such task.
+- name: Create Ansible temp directory for each user
+  ansible.builtin.file:
+    path: "/home/{{ item.0.name }}/{{ item.1 }}"
+    state: directory
+    owner: "{{ item.0.name }}"
+    group: "{{ item.0.name }}"
+    mode: "0700"
+  loop: "{{ slurm_cluster_users | product(['.ansible', '.ansible/tmp']) | list }}"

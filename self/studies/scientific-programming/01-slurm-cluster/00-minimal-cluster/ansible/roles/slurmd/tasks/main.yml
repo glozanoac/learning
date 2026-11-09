@@ -1,0 +1,33 @@
+---
+# Run after detect.yml and slurm_config: start slurmd on compute nodes.
+
+- name: Create SlurmdSpoolDir
+  ansible.builtin.file:
+    path: "{{ slurm_slurmd_spool_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Start and enable slurmd
+  ansible.builtin.systemd_service:
+    name: slurmd
+    state: started
+    enabled: true
+  register: slurmd_started
+
+- name: Restart slurmd after a configuration change
+  ansible.builtin.systemd_service:
+    name: slurmd
+    state: restarted
+  when:
+    - slurm_config_changed | default(false) | bool
+    - not slurmd_started.changed
+
+- name: Wait until the controller sees this node as usable
+  ansible.builtin.command: sinfo -h -n {{ slurm_node_hw.name }} -o %T
+  register: node_state
+  until: node_state.stdout is search('idle|mixed|allocated|completing')
+  retries: 30
+  delay: 2
+  changed_when: false

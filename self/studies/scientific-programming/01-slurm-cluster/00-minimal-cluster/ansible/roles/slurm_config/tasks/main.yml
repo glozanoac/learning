@@ -1,0 +1,50 @@
+---
+# slurm.conf must be identical on every node (controller, dbd, login, compute).
+
+- name: Ensure hardware facts exist for every compute node
+  ansible.builtin.assert:
+    that: hostvars[item].slurm_node_hw is defined
+    fail_msg: >-
+      No hardware facts for {{ item }}. Run the full site.yml (the slurmd
+      detection play must run before this one).
+    quiet: true
+  loop: "{{ groups['slurm_compute'] }}"
+  run_once: true
+
+- name: Install Slurm client commands
+  ansible.builtin.apt:
+    name: slurm-client
+    state: present
+
+- name: Create Slurm directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_user }}"
+    mode: "0755"
+  loop:
+    - "{{ slurm_conf_dir }}"
+    - "{{ slurm_log_dir }}"
+
+- name: Render slurm.conf
+  ansible.builtin.template:
+    src: slurm.conf.j2
+    dest: "{{ slurm_conf_dir }}/slurm.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  register: slurm_conf_file
+
+- name: Render cgroup.conf
+  ansible.builtin.template:
+    src: cgroup.conf.j2
+    dest: "{{ slurm_conf_dir }}/cgroup.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  register: cgroup_conf_file
+
+- name: Remember whether daemons need a restart
+  ansible.builtin.set_fact:
+    slurm_config_changed: "{{ slurm_conf_file.changed or cgroup_conf_file.changed }}"

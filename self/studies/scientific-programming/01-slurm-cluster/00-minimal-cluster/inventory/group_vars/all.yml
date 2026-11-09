@@ -1,0 +1,14 @@
+# Cluster settings. Anything not set here falls back to
+# ansible/roles/slurm_defaults/defaults/main.yml.
+
+slurm_cluster_name: hpc
+
+slurm_partitions:
+  - name: debug
+    nodes: ALL
+    default: true
+    max_time: "01:00:00"
+
+slurm_cluster_users:
+  - name: hpcuser
+    uid: 2001
