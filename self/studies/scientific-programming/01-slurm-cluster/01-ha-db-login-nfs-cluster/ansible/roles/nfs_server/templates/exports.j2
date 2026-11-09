@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+# Each share is exported only to the IPs of the hosts that mount it.
+{% for share in nfs_shares %}
+{%   set fsid = loop.index %}
+{%   set ips = share.clients | map('extract', groups) | flatten | unique
+               | map('extract', hostvars) | map(attribute='ansible_default_ipv4')
+               | map(attribute='address') | list %}
+{{ share.export }}{% for ip in ips %} {{ ip }}(rw,sync,no_subtree_check,root_squash,fsid={{ fsid }}){% endfor %}
+
+{% endfor %}

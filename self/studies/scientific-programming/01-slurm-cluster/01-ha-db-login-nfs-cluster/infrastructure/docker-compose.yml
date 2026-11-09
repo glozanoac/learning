@@ -1,0 +1,82 @@
+# Simulated machines for the Slurm cluster: plain Ubuntu 24.04 servers on one
+# private network. Nothing Slurm-related is in the image; Ansible provisions
+# them over SSH exactly like real machines.
+#
+#   nfs01      NFS server (/home and the shared controller state)   :2221
+#   slurmctl1  primary controller (slurmctld)                       :2222
+#   slurmctl2  backup controller (slurmctld)                        :2223
+#   slurmdb    accounting (slurmdbd + MariaDB)                      :2224
+#   login      login node                                           :2225
+#   c1, c2     compute nodes (slurmd)                               :2226, :2227
+#
+# SSH ports are published on 127.0.0.1. Create ssh/id_ed25519 first (see
+# README); its public half is authorized for root on every machine.
+#
+# NFS uses the host kernel: on Linux the nfs and nfsd modules must be
+# available (sudo modprobe nfs nfsd). Docker Desktop (macOS/Windows) does
+# not provide an NFS server kernel.
+
+name: slurm-sim
+
+x-node: &node
+  build:
+    context: ./node
+  image: slurm-sim/node:24.04
+  privileged: true          # systemd as PID 1, NFS mounts
+  cgroup: host
+  tmpfs:
+    - /run
+    - /run/lock
+  volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    - ./ssh/id_ed25519.pub:/keys/authorized_keys:ro
+  networks: [cluster]
+  restart: unless-stopped
+
+services:
+  nfs01:
+    <<: *node
+    hostname: nfs01
+    ports: ["127.0.0.1:2221:22"]
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./ssh/id_ed25519.pub:/keys/authorized_keys:ro
+      # exported data lives on a real host filesystem (overlayfs can't be exported)
+      - nfs-data:/srv/nfs
+
+  slurmctl1:
+    <<: *node
+    hostname: slurmctl1
+    ports: ["127.0.0.1:2222:22"]
+
+  slurmctl2:
+    <<: *node
+    hostname: slurmctl2
+    ports: ["127.0.0.1:2223:22"]
+
+  slurmdb:
+    <<: *node
+    hostname: slurmdb
+    ports: ["127.0.0.1:2224:22"]
+
+  login:
+    <<: *node
+    hostname: login
+    ports: ["127.0.0.1:2225:22"]
+
+  c1:
+    <<: *node
+    hostname: c1
+    ports: ["127.0.0.1:2226:22"]
+
+  c2:
+    <<: *node
+    hostname: c2
+    ports: ["127.0.0.1:2227:22"]
+
+networks:
+  cluster:
+    driver: bridge
+
+volumes:
+  nfs-data:

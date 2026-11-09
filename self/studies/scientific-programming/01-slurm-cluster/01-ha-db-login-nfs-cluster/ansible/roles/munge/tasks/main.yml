@@ -1,0 +1,45 @@
+---
+# MUNGE authentication: identical key on all nodes, munged started before Slurm.
+
+- name: Generate the cluster MUNGE key on the control machine (once)
+  delegate_to: localhost
+  run_once: true
+  become: false
+  block:
+    - name: Create local secrets directory
+      ansible.builtin.file:
+        path: "{{ munge_key_local_path | dirname }}"
+        state: directory
+        mode: "0700"
+    - name: Create 1 KiB random key
+      ansible.builtin.command:
+        cmd: dd if=/dev/urandom of={{ munge_key_local_path }} bs=1024 count=1
+        creates: "{{ munge_key_local_path }}"
+    - name: Restrict key permissions
+      ansible.builtin.file:
+        path: "{{ munge_key_local_path }}"
+        mode: "0600"
+
+- name: Install MUNGE
+  ansible.builtin.apt:
+    name: [munge, libmunge2]
+    state: present
+
+- name: Distribute the cluster key
+  ansible.builtin.copy:
+    src: "{{ munge_key_local_path }}"
+    dest: /etc/munge/munge.key
+    owner: munge
+    group: munge
+    mode: "0400"
+  register: munge_key
+
+- name: Start and enable munged
+  ansible.builtin.systemd_service:
+    name: munge
+    state: "{{ 'restarted' if munge_key.changed else 'started' }}"
+    enabled: true
+
+- name: Check that MUNGE can encode/decode locally
+  ansible.builtin.shell: munge -n | unmunge
+  changed_when: false

@@ -1,0 +1,106 @@
+---
+# Provision the Slurm cluster:
+#   NFS server -> shared /home and controller state
+#   slurmdbd + MariaDB -> accounting
+#   primary + backup slurmctld -> high availability
+#   compute nodes (slurmd), login node
+# Order follows the Slurm Quick Start: storage/users/clocks -> MUNGE ->
+# config -> accounting -> controllers -> compute -> login.
+
+- name: Wait until every machine is reachable
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+
+- name: Base OS on every machine
+  hosts: all
+  roles:
+    - common
+
+- name: NFS server (shared /home and controller state)
+  hosts: nfs_server
+  tags: [nfs]
+  roles:
+    - nfs_server
+
+- name: MUNGE and cluster users on every Slurm machine
+  hosts: slurm_cluster
+  roles:
+    - munge
+    - slurm_users
+
+- name: Mount the NFS shares
+  hosts: slurm_controller:slurm_login:slurm_compute
+  tags: [nfs]
+  roles:
+    - nfs_client
+
+- name: Install slurmd and detect compute hardware (slurmd -C)
+  hosts: slurm_compute
+  tasks:
+    - name: Detect hardware
+      ansible.builtin.include_role:
+        name: slurmd
+        tasks_from: detect
+
+- name: Deploy identical slurm.conf to every Slurm machine
+  hosts: slurm_cluster
+  roles:
+    - slurm_config
+
+- name: Accounting database and slurmdbd
+  hosts: slurm_dbd
+  roles:
+    - slurmdbd
+
+- name: Controllers (primary first, then backups)
+  hosts: slurm_controller
+  serial: 1
+  order: inventory
+  roles:
+    - slurmctld
+
+- name: Compute nodes
+  hosts: slurm_compute
+  roles:
+    - slurmd
+
+- name: Login node
+  hosts: slurm_login
+  roles:
+    - slurm_login
+
+- name: Smoke test - a job on every compute node, submitted from the login node
+  hosts: "{{ groups['slurm_login'][0] }}"
+  gather_facts: false
+  roles:
+    - slurm_defaults
+  become: true
+  become_user: "{{ slurm_cluster_users[0].name }}"
+  tasks:
+    - name: srun hostname on all compute nodes
+      ansible.builtin.command: >-
+        srun --nodes={{ groups['slurm_compute'] | length }}
+        --ntasks-per-node=1 --time=00:01:00 hostname
+      args:
+        chdir: "/home/{{ slurm_cluster_users[0].name }}"
+      register: smoke
+      changed_when: false
+
+    # the record reaches slurmdbd a moment after the job ends
+    - name: Job record in the accounting database
+      ansible.builtin.command: sacct -X -n -o JobID,User,Account,NodeList,State --starttime=now-1hour
+      register: acct
+      until: acct.stdout | trim | length > 0
+      retries: 10
+      delay: 2
+      changed_when: false
+
+    - name: Result
+      ansible.builtin.debug:
+        msg:
+          - "Job ran on: {{ smoke.stdout_lines | sort | join(', ') }}"
+          - "Accounting: {{ acct.stdout_lines | last | default('') | trim }}"

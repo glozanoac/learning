@@ -1,0 +1,29 @@
+---
+# Login node: no Slurm daemons; client commands come from slurm_config.
+# Users log in here, build their programs and submit jobs.
+
+- name: Install development tools
+  ansible.builtin.apt:
+    name: "{{ slurm_login_packages }}"
+    state: present
+
+- name: Login banner
+  ansible.builtin.copy:
+    dest: /etc/motd
+    mode: "0644"
+    content: |
+
+      Cluster '{{ slurm_cluster_name }}' login node.
+      Build and submit jobs here; do not run heavy work on this node.
+        sinfo            partitions and node states
+        squeue -u $USER  your jobs
+        sacct            your job history
+
+- name: Check that the login node can talk to the controller
+  ansible.builtin.command: sinfo
+  register: sinfo
+  changed_when: false
+
+- name: Cluster state
+  ansible.builtin.debug:
+    var: sinfo.stdout_lines

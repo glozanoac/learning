@@ -1,0 +1,25 @@
+---
+# Regular (non-root) accounts that submit jobs. Slurm runs each job as its
+# owner on the compute node, so the account must exist on every node with
+# the same UID/GID. Home directories live on the NFS share and are created
+# by the nfs_server role. (Larger sites usually use LDAP/SSSD instead.)
+
+- name: Create user groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid | default(item.uid) }}"
+  loop: "{{ slurm_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Create users (home on the NFS share)
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    group: "{{ item.name }}"
+    home: "/home/{{ item.name }}"
+    shell: /bin/bash
+    create_home: false
+  loop: "{{ slurm_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }}"

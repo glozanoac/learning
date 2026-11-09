@@ -1,0 +1,109 @@
+---
+# Accounting: MariaDB + slurmdbd, then cluster/accounts/users in the database.
+# See https://slurm.schedmd.com/accounting.html
+
+- name: Install MariaDB and slurmdbd
+  ansible.builtin.apt:
+    name: [mariadb-server, slurmdbd]
+    state: present
+
+# --- MariaDB ------------------------------------------------------------------
+- name: Tune InnoDB as recommended by the accounting guide
+  ansible.builtin.copy:
+    dest: /etc/mysql/mariadb.conf.d/60-slurmdbd.cnf
+    mode: "0644"
+    content: |
+      [mysqld]
+      innodb_buffer_pool_size={{ slurmdbd_innodb_buffer_pool_size }}
+      innodb_log_file_size=64M
+      innodb_lock_wait_timeout=900
+      max_allowed_packet=16M
+  register: mariadb_cnf
+
+- name: Start and enable MariaDB
+  ansible.builtin.systemd_service:
+    name: mariadb
+    state: "{{ 'restarted' if mariadb_cnf.changed else 'started' }}"
+    enabled: true
+
+- name: Check whether the accounting DB user exists
+  ansible.builtin.command: >-
+    mysql -N -B -e "SELECT COUNT(*) FROM mysql.user
+    WHERE user='{{ slurmdbd_storage_user }}' AND host='localhost'"
+  register: dbuser_exists
+  changed_when: false
+
+- name: Create accounting database and grant access (root via unix socket)
+  ansible.builtin.command:
+    cmd: mysql -B
+    stdin: |
+      CREATE DATABASE IF NOT EXISTS {{ slurmdbd_storage_db }};
+      CREATE USER IF NOT EXISTS '{{ slurmdbd_storage_user }}'@'localhost';
+      ALTER USER '{{ slurmdbd_storage_user }}'@'localhost' IDENTIFIED BY '{{ slurmdbd_storage_pass }}';
+      GRANT ALL ON {{ slurmdbd_storage_db }}.* TO '{{ slurmdbd_storage_user }}'@'localhost';
+      FLUSH PRIVILEGES;
+  changed_when: dbuser_exists.stdout | int == 0
+  no_log: true
+
+# --- slurmdbd -----------------------------------------------------------------
+- name: Create log directory
+  ansible.builtin.file:
+    path: "{{ slurm_log_dir }}"
+    state: directory
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_user }}"
+    mode: "0755"
+
+- name: Render slurmdbd.conf (must be 0600 and owned by SlurmUser)
+  ansible.builtin.template:
+    src: slurmdbd.conf.j2
+    dest: "{{ slurm_conf_dir }}/slurmdbd.conf"
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_user }}"
+    mode: "0600"
+  register: slurmdbd_conf
+  no_log: true
+
+- name: Start and enable slurmdbd
+  ansible.builtin.systemd_service:
+    name: slurmdbd
+    state: "{{ 'restarted' if slurmdbd_conf.changed else 'started' }}"
+    enabled: true
+
+- name: Wait for slurmdbd to listen
+  ansible.builtin.wait_for:
+    port: 6819
+    timeout: 60
+
+# --- Accounting entities ------------------------------------------------------
+- name: Register the cluster
+  ansible.builtin.shell: |
+    sacctmgr -n -P show cluster where name={{ slurm_cluster_name }} format=cluster | grep -qx '{{ slurm_cluster_name }}' && exit 0
+    sacctmgr -i add cluster {{ slurm_cluster_name }} && echo CHANGED
+  register: r
+  changed_when: "'CHANGED' in r.stdout"
+  retries: 5
+  delay: 3
+  until: r is succeeded
+
+- name: Create accounts
+  ansible.builtin.shell: |
+    sacctmgr -n -P show account where name={{ item.name }} format=account | grep -qx '{{ item.name }}' && exit 0
+    sacctmgr -i add account {{ item.name }} cluster={{ slurm_cluster_name }} \
+      description="{{ item.description | default(item.name) }}" \
+      organization="{{ item.organization | default(item.name) }}" && echo CHANGED
+  loop: "{{ slurm_accounts }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: r
+  changed_when: "'CHANGED' in r.stdout"
+
+- name: Create user associations
+  ansible.builtin.shell: |
+    sacctmgr -n -P show assoc where user={{ item.name }} account={{ item.account }} cluster={{ slurm_cluster_name }} format=user | grep -qx '{{ item.name }}' && exit 0
+    sacctmgr -i add user {{ item.name }} account={{ item.account }} cluster={{ slurm_cluster_name }} && echo CHANGED
+  loop: "{{ slurm_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }} -> {{ item.account }}"
+  register: r
+  changed_when: "'CHANGED' in r.stdout"

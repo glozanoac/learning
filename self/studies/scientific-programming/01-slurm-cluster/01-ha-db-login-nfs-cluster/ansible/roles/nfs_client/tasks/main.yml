@@ -1,0 +1,23 @@
+---
+# Mount the NFS shares this host needs (nfs_shares[*].clients lists the host
+# groups for each share). Uses /etc/fstab, so mounts survive reboots.
+
+- name: Install NFS client
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
+- name: Mount remote filesystems at boot
+  ansible.builtin.systemd_service:
+    name: remote-fs.target
+    enabled: true
+
+- name: Mount the shares for this host
+  vars:
+    server: "{{ hostvars[nfs_server_host].ansible_hostname }}"
+  ansible.builtin.include_tasks: mount.yml
+  when: share.clients | intersect(group_names) | length > 0
+  loop: "{{ nfs_shares }}"
+  loop_control:
+    loop_var: share
+    label: "{{ share.export }} -> {{ share.mount }}"

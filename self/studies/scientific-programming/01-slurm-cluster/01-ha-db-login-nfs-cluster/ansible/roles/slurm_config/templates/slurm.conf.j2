@@ -1,0 +1,66 @@
+# {{ ansible_managed }}
+# See https://slurm.schedmd.com/slurm.conf.html
+
+ClusterName={{ slurm_cluster_name }}
+# High availability: the first SlurmctldHost is the primary, the others are
+# backups. They share StateSaveLocation over NFS; a backup takes control when
+# the primary has not answered for SlurmctldTimeout seconds.
+{% for host in groups['slurm_controller'] %}
+SlurmctldHost={{ hostvars[host].ansible_hostname | default(host) }}
+{% endfor %}
+
+# --- Authentication & daemons ---
+AuthType=auth/munge
+SlurmUser={{ slurm_user }}
+SlurmctldPort=6817
+SlurmdPort=6818
+StateSaveLocation={{ slurm_state_save_location }}
+SlurmdSpoolDir={{ slurm_slurmd_spool_dir }}
+SlurmctldPidFile=/run/slurmctld.pid
+SlurmdPidFile=/run/slurmd.pid
+SlurmctldLogFile={{ slurm_log_dir }}/slurmctld.log
+SlurmdLogFile={{ slurm_log_dir }}/slurmd.log
+SlurmctldDebug=info
+SlurmdDebug=info
+{% if slurm_slurmd_parameters %}
+SlurmdParameters={{ slurm_slurmd_parameters }}
+{% endif %}
+
+# --- Process tracking, task binding, MPI ---
+ProctrackType={{ slurm_proctrack_type }}
+TaskPlugin={{ slurm_task_plugin }}
+MpiDefault={{ slurm_mpi_default }}
+ReturnToService=2
+
+# --- Scheduling ---
+SchedulerType=sched/backfill
+SelectType={{ slurm_select_type }}
+SelectTypeParameters={{ slurm_select_type_parameters }}
+DefMemPerCPU={{ slurm_def_mem_per_cpu }}
+
+# --- Timers ---
+InactiveLimit=0
+KillWait=30
+MinJobAge=300
+SlurmctldTimeout={{ slurm_slurmctld_timeout }}
+SlurmdTimeout=300
+Waittime=0
+
+# --- Accounting (slurmdbd) ---
+AccountingStorageType=accounting_storage/slurmdbd
+AccountingStorageHost={{ hostvars[slurm_dbd_host].ansible_hostname | default(slurm_dbd_host) }}
+AccountingStorageEnforce={{ slurm_accounting_enforce }}
+JobAcctGatherType={{ slurm_jobacct_gather_type }}
+JobAcctGatherFrequency=30
+JobCompType=jobcomp/none
+
+# --- Compute nodes (detected with `slurmd -C`) ---
+{% for host in groups['slurm_compute'] %}
+{% set hw = hostvars[host].slurm_node_hw %}
+NodeName={{ hw.name }} CPUs={{ hw.cpus }}{{ (' ' ~ hw.topology) if hw.topology else '' }} RealMemory={{ hw.memory }} State=UNKNOWN
+{% endfor %}
+
+# --- Partitions ---
+{% for p in slurm_partitions %}
+PartitionName={{ p.name }} Nodes={{ p.nodes }} Default={{ 'YES' if p.default else 'NO' }} MaxTime={{ p.max_time }} State=UP
+{% endfor %}

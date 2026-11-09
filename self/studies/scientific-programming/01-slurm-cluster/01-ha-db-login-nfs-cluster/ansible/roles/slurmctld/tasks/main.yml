@@ -1,0 +1,44 @@
+---
+# Controller(s). With several hosts in slurm_controller the first is the
+# primary and the rest are backups; site.yml runs this role one host at a
+# time, primary first.
+
+- name: Install slurmctld
+  ansible.builtin.apt:
+    name: slurmctld
+    state: present
+
+- name: Check StateSaveLocation (NFS share, owned by SlurmUser)
+  ansible.builtin.file:
+    path: "{{ slurm_state_save_location }}"
+    state: directory
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_user }}"
+    mode: "0700"
+
+- name: Start and enable slurmctld
+  ansible.builtin.systemd_service:
+    name: slurmctld
+    state: started
+    enabled: true
+  register: slurmctld_started
+
+- name: Restart slurmctld after a configuration change
+  ansible.builtin.systemd_service:
+    name: slurmctld
+    state: restarted
+  when:
+    - slurm_config_changed | default(false) | bool
+    - not slurmctld_started.changed
+
+- name: Wait until this controller answers
+  ansible.builtin.command: scontrol ping
+  register: ping
+  until: ping.stdout is search('at ' ~ ansible_hostname ~ ' is UP')
+  retries: 20
+  delay: 3
+  changed_when: false
+
+- name: Controller status
+  ansible.builtin.debug:
+    var: ping.stdout_lines

@@ -1,0 +1,79 @@
+---
+# Build and run the OpenMP pi job the way a user would: on the login node,
+# in the user's (NFS-shared) home, then show the output and the accounting
+# record.
+#
+#   ansible-playbook ansible/playbooks/openmp_job.yml
+#   ansible-playbook ansible/playbooks/openmp_job.yml -e omp_threads=8
+
+- name: Run the OpenMP example job
+  hosts: "{{ groups['slurm_login'][0] }}"
+  gather_facts: false
+  roles:
+    - slurm_defaults
+  vars:
+    job_user: "{{ slurm_cluster_users[0].name }}"
+    job_dir: "/home/{{ job_user }}/openmp"
+    omp_threads: 4                 # requested; capped to the smallest node
+  become: true
+  become_user: "{{ job_user }}"
+  tasks:
+    - name: Create job directory in the shared home
+      ansible.builtin.file:
+        path: "{{ job_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy source and batch script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../jobs/openmp/{{ item }}"
+        dest: "{{ job_dir }}/{{ item }}"
+        mode: "0644"
+      loop: [pi_omp.c, pi_omp.sbatch]
+      register: sources
+
+    - name: Check for an existing binary
+      ansible.builtin.stat:
+        path: "{{ job_dir }}/pi_omp"
+      register: binary
+
+    - name: Compile with OpenMP on the login node
+      ansible.builtin.command:
+        cmd: gcc -O2 -fopenmp -o pi_omp pi_omp.c -lm
+        chdir: "{{ job_dir }}"
+      when: sources.changed or not binary.stat.exists
+      changed_when: true
+
+    - name: Find CPUs on the smallest compute node
+      ansible.builtin.command: sinfo -h -N -o %c
+      register: node_cpus
+      changed_when: false
+
+    - name: Submit and wait for completion
+      vars:
+        cpus: "{{ [omp_threads | int, node_cpus.stdout_lines | map('int') | min] | min }}"
+      ansible.builtin.command:
+        cmd: sbatch --parsable --wait --cpus-per-task={{ cpus }} pi_omp.sbatch
+        chdir: "{{ job_dir }}"
+      register: job
+      changed_when: true
+
+    - name: Read job output (shared home, so it is visible here)
+      ansible.builtin.command: cat {{ job_dir }}/pi-omp-{{ job.stdout | trim }}.out
+      register: job_out
+      changed_when: false
+
+    - name: Read accounting record
+      ansible.builtin.command: >-
+        sacct -j {{ job.stdout | trim }} -X
+        --format=JobID,JobName,User,Account,NodeList,AllocCPUS,Elapsed,State,ExitCode
+      register: job_acct
+      # the final record reaches slurmdbd a moment after the job ends
+      until: job_acct.stdout is search('pi-omp')
+      retries: 10
+      delay: 2
+      changed_when: false
+
+    - name: Job output
+      ansible.builtin.debug:
+        msg: "{{ job_out.stdout_lines + [''] + job_acct.stdout_lines }}"

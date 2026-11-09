@@ -1,0 +1,25 @@
+# {{ ansible_managed }}
+# See https://slurm.schedmd.com/slurmdbd.conf.html
+AuthType=auth/munge
+DbdHost={{ ansible_hostname }}
+DbdPort=6819
+SlurmUser={{ slurm_user }}
+LogFile={{ slurm_log_dir }}/slurmdbd.log
+PidFile=/run/slurmdbd.pid
+DebugLevel=info
+
+StorageType=accounting_storage/mysql
+StorageHost=localhost
+StoragePort=3306
+StorageLoc={{ slurmdbd_storage_db }}
+StorageUser={{ slurmdbd_storage_user }}
+StoragePass={{ slurmdbd_storage_pass }}
+
+# Keep 12 months of job records
+PurgeEventAfter=12month
+PurgeJobAfter=12month
+PurgeResvAfter=12month
+PurgeStepAfter=12month
+PurgeSuspendAfter=12month
+PurgeTXNAfter=12month
+PurgeUsageAfter=24month

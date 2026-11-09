@@ -1,0 +1,23 @@
+# Cluster settings. Anything not set here falls back to
+# ansible/roles/slurm_defaults/defaults/main.yml.
+
+slurm_cluster_name: hpc
+
+slurm_partitions:
+  - name: debug
+    nodes: ALL
+    default: true
+    max_time: "01:00:00"
+
+# Accounts in the accounting database
+slurm_accounts:
+  - name: research
+    description: Research group
+    organization: hpc
+
+# Users: same UID on every node, home on the NFS share, and an association
+# with one of the accounts above (required to submit jobs)
+slurm_cluster_users:
+  - name: hpcuser
+    uid: 2001
+    account: research

@@ -1,0 +1,39 @@
+---
+# Mount one share (loop variable `share`) from `server`.
+
+- name: "Check whether {{ share.mount }} is mounted"
+  ansible.builtin.command: findmnt -n -o SOURCE --mountpoint {{ share.mount }}
+  register: current
+  changed_when: false
+  failed_when: false
+  check_mode: false     # read-only; also run it in --check mode
+
+# Only before mounting: afterwards the directory belongs to the server
+# (root_squash), and root here may not change it.
+- name: "Create mount point {{ share.mount }}"
+  ansible.builtin.file:
+    path: "{{ share.mount }}"
+    state: directory
+    mode: "0755"
+  when: current.rc != 0
+
+- name: "Add {{ share.mount }} to /etc/fstab"
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^\S+\s+{{ share.mount }}\s'
+    line: "{{ server }}:{{ share.export }} {{ share.mount }} nfs {{ nfs_mount_options }} 0 0"
+    create: true
+    mode: "0644"
+  register: fstab
+
+- name: "Mount {{ share.mount }}"
+  ansible.builtin.command: mount {{ share.mount }}
+  when: current.rc != 0
+  changed_when: true
+
+- name: "Remount {{ share.mount }} after an fstab change"
+  ansible.builtin.shell: umount {{ share.mount }} && mount {{ share.mount }}
+  when:
+    - current.rc == 0
+    - fstab.changed
+  changed_when: true
