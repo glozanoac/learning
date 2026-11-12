@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Road to Dynamic Programming - Field Map</title>
+<style>
+:root{--bg:#f6f6f4;--panel:#fff;--ink:#1d1d1f;--muted:#6b6b70;--line:#dcdce0;--edge:#b0b0b8}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#app{display:grid;grid-template-columns:1fr 380px;grid-template-rows:auto 1fr;height:100vh}
+header{grid-column:1/3;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font-size:16px;margin:0 6px 0 0;font-weight:650}
+#crumbs{font-size:14px}
+#crumbs a{color:#2457c5;cursor:pointer;text-decoration:none}
+#crumbs a:hover{text-decoration:underline}
+header label{font-size:13px;color:var(--muted)}
+select,button{font:inherit;font-size:13px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer}
+select:hover,button:hover{border-color:#999}
+select:disabled{opacity:.5;cursor:default}
+#progress{margin-left:auto;font-size:13px;color:var(--muted)}
+#canvas{position:relative;overflow:hidden;cursor:grab}
+#canvas.dragging{cursor:grabbing}
+svg{width:100%;height:100%;display:block;user-select:none}
+.node{cursor:pointer;transition:opacity .15s}
+.node rect{stroke-width:1.8}
+.node.optional rect{stroke-dasharray:6 4}
+.node.selected rect{stroke-width:3.8}
+.node .t{font-size:14px;font-weight:600;fill:var(--ink);pointer-events:none}
+.node .s{font-size:11.5px;fill:var(--muted);pointer-events:none}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.6;transition:opacity .15s}
+.edge.optional{stroke-dasharray:5 4}
+.edge.hot{stroke:#2b2b30;stroke-width:2.6}
+.dim{opacity:.12}
+#tip{position:absolute;pointer-events:none;background:#1d1d1f;color:#fff;font-size:12px;padding:6px 9px;border-radius:6px;max-width:300px;display:none;line-height:1.4}
+#hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.88);padding:4px 8px;border-radius:6px}
+aside{border-left:1px solid var(--line);background:var(--panel);padding:18px;overflow:auto;font-size:14px;line-height:1.5}
+aside h2{font-size:18px;margin:0 0 6px}
+aside h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:16px 0 4px}
+aside p{margin:0}
+.pill{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;color:#fff;margin-right:6px}
+.badge{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:999px;border:1px dashed #888;color:#555}
+.links a,ol.steps a{color:#2457c5;cursor:pointer;text-decoration:none}
+.links a{display:inline-block;margin:2px 10px 2px 0;font-size:13px}
+.links a:hover,ol.steps a:hover{text-decoration:underline}
+ol.steps{padding-left:22px;margin:6px 0}
+ol.steps li{margin:3px 0}
+ol.steps .opt{color:#888;font-size:12px}
+ol.steps .ok{color:#2e7d32;font-weight:600}
+.open{margin-top:14px;width:100%;padding:8px;font-weight:600;background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+.open:hover{background:#333}
+.done-row{margin-top:16px;display:flex;align-items:center;gap:8px}
+.legend div{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.legend span.sw{width:16px;height:12px;border-radius:3px;border:2px solid}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Road to Dynamic Programming</h1>
+    <span id="crumbs"></span>
+    <label>Branch
+      <select id="branch"></select>
+    </label>
+    <label>On click, highlight
+      <select id="mode">
+        <option value="anc">prerequisites (path to it)</option>
+        <option value="desc">what it unlocks</option>
+        <option value="both">both</option>
+      </select>
+    </label>
+    <button id="zin" title="Zoom in">+</button>
+    <button id="zout" title="Zoom out">-</button>
+    <button id="fit">Fit</button>
+    <button id="clear">Clear</button>
+    <span id="progress"></span>
+  </header>
+  <div id="canvas">
+    <svg id="svg"><defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9a9aa3"/></marker>
+      <marker id="arrHot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2b2b30"/></marker>
+    </defs><g id="world"><g id="edges"></g><g id="nodes"></g></g></svg>
+    <div id="tip"></div>
+    <div id="hint"></div>
+  </div>
+  <aside id="panel"></aside>
+</div>
+
+<script>
+// ===================== DATA =====================
+const CATS = {
+  math: {name:"Mathematical foundations", color:"#4e79a7"},
+  prob: {name:"Probability & stochastic processes", color:"#59a14f"},
+  algo: {name:"Algorithms", color:"#9c755f"},
+  opt:  {name:"Optimization", color:"#f28e2b"},
+  dp:   {name:"Dynamic programming", color:"#e15759"},
+  rl:   {name:"Approximate DP & RL", color:"#b07aa1"},
+  goal: {name:"Goal", color:"#222222"}
+};
+
+const VEL = "D. J. Velleman - How to Prove It (3rd ed.)";
+const ABB = "S. Abbott - Understanding Analysis (2nd ed.)";
+const BT  = "D. P. Bertsekas & J. N. Tsitsiklis - Introduction to Probability (2nd ed.)";
+const CLRS = "Cormen, Leiserson, Rivest, Stein - Introduction to Algorithms (3rd ed.)";
+const BV  = "S. Boyd & L. Vandenberghe - Convex Optimization";
+const BV1 = "D. P. Bertsekas - Dynamic Programming and Optimal Control, Vol. I (3rd ed.)";
+const PUT = "M. L. Puterman - Markov Decision Processes";
+const SB  = "R. S. Sutton & A. G. Barto - Reinforcement Learning (2nd ed.)";
+const BRL = "D. P. Bertsekas - Reinforcement Learning and Optimal Control";
+const BTLP = "D. Bertsimas & J. N. Tsitsiklis - Introduction to Linear Optimization";
+const WOL = "L. A. Wolsey - Integer Programming (2nd ed.)";
+
+const FIELDS = [
+ {id:"proofs", label:"Mathematical proofs", cat:"math", deps:[], short:"Velleman",
+  desc:"The language of every proof in Bertsekas. The DP algorithm is proved optimal by backward induction over the stages.",
+  topics:[
+   {id:"logic", label:"Logic & quantifiers", deps:[], book:VEL, ch:"Ch. 1-2",
+    why:"Statements like 'for every state x there exists a control u' must be read precisely.", check:"You can negate a statement with nested quantifiers."},
+   {id:"strategies", label:"Proof strategies", deps:["logic"], book:VEL, ch:"Ch. 3",
+    why:"Direct proof, contradiction, cases: the toolkit used in every DP proof.", check:"You can prove an existence and a uniqueness claim."},
+   {id:"functions", label:"Sets, functions, relations", deps:["strategies"], book:VEL, ch:"Ch. 4-5",
+    why:"A policy is a function mu_k from states to controls; value functions are functions on the state space.", check:"You can say what it means for a policy to be a function and not a sequence of numbers."},
+   {id:"induction", label:"Induction", deps:["strategies"], book:VEL, ch:"Ch. 6",
+    why:"The DP algorithm is proved by induction on k = N, N-1, ..., 0.", check:"You can prove a claim by backward induction on the stage index."},
+   {id:"recursion", label:"Recursive definitions", deps:["induction","functions"], book:VEL, ch:"Ch. 6 (recursion)",
+    why:"J_k is defined recursively from J_{k+1}; you must reason about recursively defined objects.", check:"You can prove a property of a recursively defined sequence of functions."}
+  ]},
+ {id:"analysis", label:"Real analysis", cat:"math", deps:["proofs"], short:"Abbott",
+  desc:"Needed for infinite-horizon DP: convergence of value iteration, discounted sums, existence of minimizers.",
+  topics:[
+   {id:"reals", label:"Real numbers, sup & inf", deps:[], book:ABB, ch:"Ch. 1",
+    why:"Costs are minimized over sets of controls; the infimum may not be attained.", check:"You can tell min from inf with an example."},
+   {id:"seq", label:"Sequences & limits", deps:["reals"], book:ABB, ch:"Ch. 2",
+    why:"Value iteration produces a sequence J_0, J_1, ... that must converge to J*.", check:"You can prove a monotone bounded sequence converges."},
+   {id:"series", label:"Series (geometric)", deps:["seq"], book:ABB, ch:"Ch. 2",
+    why:"A discounted cost is sum of alpha^k g_k; it is finite because the geometric series converges.", check:"You can bound sum alpha^k g_k when |g| <= M."},
+   {id:"cauchy", label:"Cauchy sequences & completeness", deps:["seq"], book:ABB, ch:"Ch. 2",
+    why:"Completeness is what guarantees the limit of value iteration exists.", check:"You can explain why every Cauchy sequence of reals converges."},
+   {id:"cont", label:"Continuity & extreme values", deps:["seq"], book:ABB, ch:"Ch. 4",
+    why:"Weierstrass theorem: a continuous cost on a compact control set attains its minimum.", check:"You can state when min over u of g(x,u) exists."},
+   {id:"contraction", label:"Contraction mappings & fixed points", deps:["cauchy","series"], book:PUT, ch:"Sec. 6.2 (Banach fixed-point theorem)",
+    why:"The Bellman operator is an alpha-contraction; its unique fixed point is J*.", check:"You can prove the Banach fixed-point theorem in R^n with the max norm."}
+  ]},
+ {id:"probability", label:"Probability", cat:"prob", deps:["proofs","analysis"], short:"Bertsekas & Tsitsiklis",
+  desc:"The disturbance w_k is random and DP minimizes an expected cost. This is the most common hidden gap behind not following Bertsekas.",
+  topics:[
+   {id:"axioms", label:"Sample spaces & axioms", deps:[], book:BT, ch:"Ch. 1",
+    why:"Foundation for every probabilistic statement in the book.", check:"You can build the sample space of two demand periods."},
+   {id:"condprob", label:"Conditional probability & Bayes", deps:["axioms"], book:BT, ch:"Ch. 1",
+    why:"Disturbance distributions may depend on x_k and u_k: P(w | x, u).", check:"You can apply Bayes rule to update a belief."},
+   {id:"indep", label:"Independence", deps:["condprob"], book:BT, ch:"Ch. 1",
+    why:"The basic DP model assumes w_0, ..., w_{N-1} are independent given (x_k, u_k).", check:"You can say why independence makes the state x_k sufficient."},
+   {id:"discrete", label:"Discrete random variables", deps:["axioms"], book:BT, ch:"Ch. 2",
+    why:"Demand in the inventory example is a discrete random variable with a PMF.", check:"You can write the PMF of a demand and compute its CDF."},
+   {id:"expect", label:"Expectation & E[g(X)]", deps:["discrete"], book:BT, ch:"Ch. 2",
+    why:"Each DP step computes E[ g(x,u,w) + J_{k+1}(f(x,u,w)) ].", check:"You can compute E[g(x,w)] by hand for a given x."},
+   {id:"joint", label:"Joint distributions", deps:["expect","indep"], book:BT, ch:"Ch. 2-3",
+    why:"Several random quantities at once: demand, lead time, breakdowns.", check:"You can compute a marginal from a joint table."},
+   {id:"continuous", label:"Continuous random variables", deps:["expect"], book:BT, ch:"Ch. 3",
+    why:"Many models use continuous disturbances (truck travel times, grades).", check:"You can compute E[X] from a PDF."},
+   {id:"condexp", label:"Conditional expectation & tower property", deps:["joint","continuous"], book:BT, ch:"Sec. 4.3",
+    why:"J_k(x) = min_u E[ ... | x_k = x ]. The proof of the DP algorithm uses E[ E[X|Y] ] = E[X].", check:"You can explain the tower property and use it in a 2-stage proof."},
+   {id:"lln", label:"Law of large numbers", deps:["condexp"], book:BT, ch:"Ch. 5",
+    why:"Justifies estimating expectations by simulation (Monte Carlo), the basis of approximate DP and RL.", check:"You can explain why a sample mean of costs estimates J_mu(x)."}
+  ]},
+ {id:"stochastic", label:"Stochastic processes", cat:"prob", deps:["probability"], short:"Bertsekas & Tsitsiklis",
+  desc:"Fixing a policy turns the controlled system into a Markov chain. Infinite-horizon theory studies these chains.",
+  topics:[
+   {id:"bernpois", label:"Bernoulli & Poisson processes", deps:[], book:BT, ch:"Ch. 6", optional:true,
+    why:"Models of arrivals (trucks at a shovel, failures). Useful for mining models, not required for DP.", check:"You can compute interarrival distributions of a Poisson process."},
+   {id:"markovprop", label:"Markov property & transition matrix", deps:[], book:BT, ch:"Ch. 7",
+    why:"x_{k+1} depends only on (x_k, u_k, w_k): this is what makes DP work.", check:"You can build the transition matrix of the inventory system under a fixed policy."},
+   {id:"nstep", label:"n-step transitions", deps:["markovprop"], book:BT, ch:"Ch. 7",
+    why:"Expected future costs are sums over n-step transition probabilities.", check:"You can compute P(x_n = j | x_0 = i) by hand."},
+   {id:"classify", label:"Classification of states", deps:["nstep"], book:BT, ch:"Ch. 7",
+    why:"Recurrent and transient states matter for average-cost and shortest-path problems.", check:"You can identify recurrent classes in a chain."},
+   {id:"stationary", label:"Stationary distributions", deps:["classify"], book:BT, ch:"Ch. 7",
+    why:"Long-run behaviour under a fixed policy; needed for average-cost problems.", check:"You can solve pi = pi P for a 3-state chain."},
+   {id:"absorb", label:"Absorption probabilities & expected time", deps:["classify"], book:BT, ch:"Ch. 7",
+    why:"Stochastic shortest path problems are absorbing chains with costs.", check:"You can compute the expected steps to absorption."}
+  ]},
+ {id:"algorithms", label:"Algorithms", cat:"algo", deps:["proofs"], short:"CLRS",
+  desc:"Deterministic DP and shortest paths show the recursion without probability.",
+  topics:[
+   {id:"recur", label:"Recursion & recurrences", deps:[], book:CLRS, ch:"Ch. 4",
+    why:"The DP recursion is a recurrence; you must reason about its cost and correctness.", check:"You can solve a simple recurrence."},
+   {id:"algodp", label:"Algorithmic DP: optimal substructure", deps:["recur"], book:CLRS, ch:"Ch. 15",
+    why:"Optimal substructure plus tabulation is the principle of optimality in discrete form.", check:"You can fill the knapsack table by hand and recover the solution."},
+   {id:"graphs", label:"Graphs & traversal", deps:[], book:CLRS, ch:"Ch. 22",
+    why:"Deterministic DPs are paths in staged graphs.", check:"You can draw a staged graph of a 3-stage problem."},
+   {id:"sp", label:"Shortest paths (Bellman-Ford, Dijkstra, DAGs)", deps:["graphs","algodp"], book:CLRS, ch:"Ch. 24",
+    why:"Bellman-Ford is a DP; Bertsekas Ch. 2 builds on it.", check:"You can run Bellman-Ford by hand and explain why it is a DP."}
+  ]},
+ {id:"convex", label:"Convex analysis", cat:"opt", deps:["analysis"], short:"Boyd & Vandenberghe; MMC007",
+  desc:"Structural results in DP (e.g. base-stock inventory policies) are proved by showing that cost-to-go functions stay convex.",
+  topics:[
+   {id:"csets", label:"Convex sets", deps:[], book:BV, ch:"Ch. 2",
+    why:"Control constraint sets U(x) are often convex.", check:"You can prove an intersection of convex sets is convex."},
+   {id:"cfun", label:"Convex functions", deps:["csets"], book:BV, ch:"Ch. 3",
+    why:"Cost-to-go functions J_k are shown to be convex in x.", check:"You can verify convexity by definition and by second derivative."},
+   {id:"cops", label:"Operations preserving convexity", deps:["cfun"], book:BV, ch:"Sec. 3.2 (weighted sums, partial minimization)",
+    why:"Expectation preserves convexity, and min over u of a jointly convex function is convex in x: the two steps of the inventory proof.", check:"You can prove both facts."},
+   {id:"opt1", label:"Optimality of convex minimization", deps:["cfun"], book:BV, ch:"Ch. 4 (and your MMC007 notes)",
+    why:"The optimal order level solves a 1-D convex minimization (critical point = base-stock level).", check:"You can find the minimizer of a convex 1-D cost and argue it is global."},
+   {id:"kconv", label:"K-convexity", deps:["cops"], book:BV1, ch:"Sec. 4.2", optional:true,
+    why:"Needed for inventory with fixed ordering cost, giving (s, S) policies.", check:"You can state the definition of K-convexity."}
+  ]},
+ {id:"dpfinite", label:"Finite-horizon DP", cat:"dp", deps:["probability","algorithms","convex"], short:"Bertsekas Vol. I, Ch. 1, 2, 4",
+  desc:"The core of Bertsekas Vol. I: the basic problem, the DP algorithm, deterministic DP and structured applications.",
+  topics:[
+   {id:"basic", label:"Basic problem: state, control, disturbance", deps:[], book:BV1, ch:"Sec. 1.1-1.2",
+    why:"Model x_{k+1} = f_k(x_k, u_k, w_k), stage cost g_k, and policies pi = (mu_0, ..., mu_{N-1}).", check:"You can write the inventory example in this form."},
+   {id:"principle", label:"Principle of optimality & DP algorithm", deps:["basic"], book:BV1, ch:"Sec. 1.3",
+    why:"The backward recursion J_N, J_{N-1}, ..., J_0 and why it is optimal.", check:"You solved the inventory example (3 stock levels, 2-3 periods, 2 demand values) by hand."},
+   {id:"augment", label:"State augmentation", deps:["principle"], book:BV1, ch:"Sec. 1.4",
+    why:"How to turn delays, correlated disturbances and constraints into the basic form; key for modelling mining systems.", check:"You can augment the state to handle a one-period delivery lag."},
+   {id:"det", label:"Deterministic DP & shortest path", deps:["principle"], book:BV1, ch:"Ch. 2",
+    why:"Without randomness, DP is a shortest-path problem on a staged graph.", check:"You can convert a deterministic finite-horizon problem to a shortest-path problem."},
+   {id:"inventory", label:"Inventory control (base-stock)", deps:["principle"], book:BV1, ch:"Sec. 4.2",
+    why:"The example in your figure, solved completely: convexity gives a simple optimal policy.", check:"You can reproduce the proof that the optimal policy is base-stock."},
+   {id:"stopping", label:"Optimal stopping", deps:["principle"], book:BV1, ch:"Sec. 4.4",
+    why:"Decide when to stop (e.g. stop mining a block, replace equipment).", check:"You can solve an asset-selling problem with a threshold policy."},
+   {id:"imperfect", label:"Imperfect state information", deps:["augment"], book:BV1, ch:"Ch. 5", optional:true,
+    why:"The state is not observed exactly (e.g. uncertain ore grade). Skip on the first pass.", check:"You can explain why the belief state is a sufficient statistic."}
+  ]},
+ {id:"infinite", label:"MDPs & infinite horizon", cat:"dp", deps:["dpfinite","stochastic","analysis"], short:"Bertsekas Vol. I Ch. 7; Puterman",
+  desc:"Stationary policies, the Bellman equation, value and policy iteration. The base for RL and for dispatch problems with no natural end.",
+  topics:[
+   {id:"mdpform", label:"MDP formulation (S, A, P, r)", deps:[], book:PUT, ch:"Ch. 2-3",
+    why:"The language of RL papers; translate it to Bertsekas' (x, u, w, f, g).", check:"You can write the inventory problem as an MDP."},
+   {id:"ssp", label:"Stochastic shortest path", deps:["mdpform"], book:BV1, ch:"Sec. 7.2",
+    why:"Undiscounted problems that end in a termination state.", check:"You can state when an SSP policy is proper."},
+   {id:"discounted", label:"Discounted problems & Bellman equation", deps:["mdpform"], book:BV1, ch:"Sec. 7.3; Puterman Sec. 6.1-6.2",
+    why:"J* is the unique solution of J = TJ.", check:"You can write the Bellman equation of a 2-state problem."},
+   {id:"polevl", label:"Policy evaluation as a linear system", deps:["discounted"], book:PUT, ch:"Sec. 6.1",
+    why:"For a fixed policy mu, J_mu solves (I - alpha P_mu) J = g_mu. The only linear algebra you need here.", check:"You can compute J_mu for a 2-state chain by solving 2 equations."},
+   {id:"vi", label:"Value iteration", deps:["discounted"], book:PUT, ch:"Sec. 6.3",
+    why:"Repeated application of T converges to J* because T is a contraction.", check:"You can run 3 iterations by hand and bound the error."},
+   {id:"pi", label:"Policy iteration", deps:["polevl","vi"], book:PUT, ch:"Sec. 6.4",
+    why:"Alternate evaluation and improvement; converges in finitely many steps.", check:"You can run policy iteration by hand and get the same policy as value iteration."},
+   {id:"avg", label:"Average-cost problems", deps:["vi"], book:BV1, ch:"Sec. 7.4", optional:true,
+    why:"Long-run cost per stage; natural for continuous operations like dispatch.", check:"You can write the average-cost Bellman equation."},
+   {id:"lpmdp", label:"LP approach to MDPs", deps:["discounted"], book:PUT, ch:"Sec. 6.9", optional:true,
+    why:"Where linear optimization reconnects to DP: J* solves an LP.", check:"You can write the LP whose solution is J* for a small MDP."}
+  ]},
+ {id:"approx", label:"Approximate DP & RL", cat:"rl", deps:["infinite"], short:"Bertsekas; Sutton & Barto",
+  desc:"Real problems are too large for exact DP. Simulation and function approximation: your thesis area and the theory behind your MARL dispatch work.",
+  topics:[
+   {id:"ce", label:"Certainty equivalence", deps:[], book:BV1, ch:"Ch. 6",
+    why:"Replace w_k by its expected value: the simplest suboptimal scheme.", check:"You can explain when it is exact (LQ problems)."},
+   {id:"lookahead", label:"Limited lookahead", deps:["ce"], book:BV1, ch:"Ch. 6",
+    why:"Optimize a few stages ahead using an approximate cost-to-go.", check:"You can write a one-step lookahead policy."},
+   {id:"rollout", label:"Rollout", deps:["lookahead"], book:BV1, ch:"Ch. 6; " + BRL + " Ch. 2",
+    why:"Improve any base heuristic (e.g. a dispatch rule) by simulation.", check:"You can explain why rollout is no worse than its base policy."},
+   {id:"mc", label:"Monte Carlo policy evaluation", deps:[], book:SB, ch:"Ch. 5",
+    why:"Estimate J_mu from simulated episodes when P is unknown.", check:"You can estimate the value of a state from sample returns."},
+   {id:"td", label:"Temporal-difference learning", deps:["mc"], book:SB, ch:"Ch. 6",
+    why:"A stochastic approximation of the Bellman equation.", check:"You can derive TD(0) from the Bellman equation."},
+   {id:"qlearn", label:"Q-learning", deps:["td"], book:SB, ch:"Ch. 6",
+    why:"Learn Q-factors without a model; foundation of deep RL.", check:"You can write the Q-learning update and explain each term."},
+   {id:"fa", label:"Function approximation", deps:["td","rollout"], book:SB, ch:"Ch. 9; " + BRL + " Ch. 3",
+    why:"Represent J or Q with features or neural networks when states are too many.", check:"You can explain why TD with linear features may diverge off-policy."},
+   {id:"pg", label:"Policy gradient & actor-critic", deps:["fa"], book:SB, ch:"Ch. 13",
+    why:"The family of methods used in MARL dispatch systems.", check:"You can derive the policy gradient theorem for a one-step problem."}
+  ]},
+ {id:"lp", label:"Linear optimization", cat:"opt", deps:["proofs"], short:"Bertsimas & Tsitsiklis", optional:true,
+  desc:"Optional for DP. Valuable for mine planning, and it reconnects to DP through the LP approach to MDPs.",
+  topics:[
+   {id:"form", label:"LP formulations", deps:[], book:BTLP, ch:"Ch. 1", why:"Modelling skill.", check:"You can formulate a blending problem."},
+   {id:"geom", label:"Geometry of LP", deps:["form"], book:BTLP, ch:"Ch. 2", why:"Vertices, bases, optimality at extreme points.", check:"You can explain why an optimum is attained at a vertex."},
+   {id:"simplex", label:"Simplex method", deps:["geom"], book:BTLP, ch:"Ch. 3", why:"The standard algorithm.", check:"You can run a simplex iteration by hand."},
+   {id:"duality", label:"Duality", deps:["geom"], book:BTLP, ch:"Ch. 4", why:"Bounds and prices; used in the LP approach to MDPs.", check:"You can write a dual and state complementary slackness."},
+   {id:"sens", label:"Sensitivity analysis", deps:["duality","simplex"], book:BTLP, ch:"Ch. 5", why:"How the optimum changes with data.", check:"You can interpret a shadow price."}
+  ]},
+ {id:"ip", label:"Integer programming", cat:"opt", deps:["lp"], short:"Wolsey", optional:true,
+  desc:"Optional for DP. Relevant for mine scheduling; some integer programs (knapsack) are solved by DP.",
+  topics:[
+   {id:"ipform", label:"IP formulations", deps:[], book:WOL, ch:"Ch. 1", why:"Binary decisions such as block extraction.", check:"You can formulate block precedence constraints."},
+   {id:"relax", label:"Relaxations & bounds", deps:["ipform"], book:WOL, ch:"Ch. 2", why:"LP relaxations give bounds.", check:"You can compute an LP bound for a small IP."},
+   {id:"bb", label:"Branch and bound", deps:["relax"], book:WOL, ch:"Branch and bound chapter", why:"Main exact method.", check:"You can draw a B&B tree by hand."},
+   {id:"cuts", label:"Cutting planes", deps:["relax"], book:WOL, ch:"Cutting plane chapter", why:"Strengthen formulations.", check:"You can derive a Gomory cut."},
+   {id:"ipdp", label:"DP for integer problems", deps:["ipform"], book:WOL, ch:"Dynamic programming chapter", why:"Knapsack by DP: a bridge back to your goal.", check:"You can solve a knapsack by DP."}
+  ]},
+ {id:"goal", label:"GOAL: Dynamic programming", cat:"goal", deps:["approx"], short:"Bertsekas Vol. I fully understood",
+  desc:"Model mining decisions as sequential decision problems and solve them with exact or approximate DP.",
+  topics:[]}
+];
+// optional dependency edges (drawn dashed, not part of the minimal path)
+const OPT_EDGES = [["lp","infinite"]];
+
+// ===================== HELPERS =====================
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const el = (t, a = {}) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const fieldById = Object.fromEntries(FIELDS.map(f => [f.id, f]));
+
+let done = new Set();
+try { done = new Set(JSON.parse(localStorage.getItem("dpRoadDone2") || "[]")); } catch (e) {}
+const saveDone = () => { try { localStorage.setItem("dpRoadDone2", JSON.stringify([...done])); } catch (e) {} };
+const key = (f, t) => f + ":" + t;
+const fieldProgress = f => [f.topics.filter(t => done.has(key(f.id, t.id))).length, f.topics.length];
+
+// ===================== STATE =====================
+let current = null;     // null = field map, otherwise field id
+let selected = null;
+let items = [], edges = [], byId = {}, children = {};
+
+function buildGraph(){
+  if (!current) {
+    items = FIELDS.map(f => ({...f}));
+    edges = [];
+    FIELDS.forEach(f => f.deps.forEach(d => edges.push({from:d, to:f.id, optional:!!(fieldById[d].optional || f.optional)})));
+    OPT_EDGES.forEach(([a, b]) => edges.push({from:a, to:b, optional:true}));
+  } else {
+    const f = fieldById[current];
+    items = f.topics.map(t => ({...t, cat:f.cat}));
+    edges = [];
+    f.topics.forEach(t => t.deps.forEach(d => edges.push({from:d, to:t.id, optional:!!(t.optional)})));
+  }
+  byId = Object.fromEntries(items.map(n => [n.id, n]));
+  children = Object.fromEntries(items.map(n => [n.id, []]));
+  edges.forEach(e => children[e.from].push(e.to));
+  layout();
+}
+
+// layered layout: layer = longest path over required deps
+const W = 250, H = 60, GX = 320, GY = 96;
+function layout(){
+  const memo = {};
+  const L = id => { if (memo[id] !== undefined) return memo[id]; memo[id] = -1;
+    const n = byId[id]; memo[id] = n.deps.length ? 1 + Math.max(...n.deps.map(L)) : 0; return memo[id]; };
+  items.forEach(n => n.layer = L(n.id));
+  const layers = [];
+  items.forEach(n => (layers[n.layer] ||= []).push(n));
+  // Long edges are split by invisible "lane" points in every layer they cross,
+  // so each lane gets its own slot and the line never passes through a box.
+  const pred = new Map(), succ = new Map();
+  const add = (m, a, b) => { if (!m.has(a)) m.set(a, []); m.get(a).push(b); };
+  let dc = 0;
+  edges.forEach(e => {
+    const s = byId[e.from], t = byId[e.to]; let prev = s; e.chain = [];
+    for (let l = s.layer + 1; l < t.layer; l++) {
+      const d = {id:"__lane" + (dc++), dummy:true, layer:l};
+      (layers[l] ||= []).push(d); e.chain.push(d);
+      add(succ, prev, d); add(pred, d, prev); prev = d;
+    }
+    add(succ, prev, t); add(pred, t, prev);
+  });
+  const SLOT_N = GY, SLOT_D = 28;
+  const place = () => layers.forEach((Ls, li) => {
+    const tot = Ls.reduce((s, n) => s + (n.dummy ? SLOT_D : SLOT_N), 0); let y = -tot / 2;
+    Ls.forEach(n => { const sl = n.dummy ? SLOT_D : SLOT_N; n.x = li * GX; n.cy = y + sl / 2; n.y = n.cy - H / 2; y += sl; });
+  });
+  place();
+  const bary = (n, m) => { const a = m.get(n); return a && a.length ? a.reduce((s, k) => s + k.cy, 0) / a.length : n.cy; };
+  for (let it = 0; it < 6; it++) {
+    for (let li = 1; li < layers.length; li++) { layers[li].forEach(n => n.bc = bary(n, pred)); layers[li].sort((a, b) => a.bc - b.bc); place(); }
+    for (let li = layers.length - 2; li >= 0; li--) { layers[li].forEach(n => n.bc = bary(n, succ)); layers[li].sort((a, b) => a.bc - b.bc); place(); }
+  }
+  allPts = layers.flat();
+}
+let allPts = [];
+
+function ancestors(id, acc = new Set(), reqOnly = false){
+  byId[id].deps.forEach(d => { if (!acc.has(d)) { acc.add(d); ancestors(d, acc, reqOnly); } });
+  if (!reqOnly) edges.filter(e => e.to === id && e.optional && !byId[id].deps.includes(e.from))
+    .forEach(e => { if (!acc.has(e.from)) { acc.add(e.from); ancestors(e.from, acc); } });
+  return acc;
+}
+function descendants(id, acc = new Set()){ children[id].forEach(c => { if (!acc.has(c)) { acc.add(c); descendants(c, acc); } }); return acc; }
+const ordered = () => [...items].sort((a, b) => a.layer - b.layer || a.y - b.y);
+
+// ===================== RENDER =====================
+const gE = $("edges"), gN = $("nodes"), svg = $("svg"), world = $("world");
+let nodeEls = {}, edgeEls = [];
+
+function render(){
+  gE.innerHTML = ""; gN.innerHTML = ""; nodeEls = {}; edgeEls = [];
+  edges.forEach(e => {
+    const s = byId[e.from], t = byId[e.to];
+    let x = s.x + W, y = s.cy, d = `M${x},${y}`;
+    const seg = (x2, y2) => { const mx = (x + x2) / 2; d += ` C${mx},${y} ${mx},${y2} ${x2},${y2}`; x = x2; y = y2; };
+    e.chain.forEach(k => { seg(k.x, k.cy); d += ` L${k.x + W},${k.cy}`; x = k.x + W; });
+    seg(t.x - 2, t.cy);
+    const p = el("path", {class:"edge" + (e.optional ? " optional" : ""), d, "marker-end":"url(#arr)"});
+    p._e = e; gE.appendChild(p); edgeEls.push(p);
+  });
+  items.forEach(n => {
+    const c = CATS[n.cat].color;
+    const g = el("g", {class:"node" + (n.optional ? " optional" : ""), transform:`translate(${n.x},${n.y})`});
+    const r = el("rect", {width:W, height:H, rx:9, stroke:c});
+    const t = el("text", {class:"t", x:12, y:25});
+    const s = el("text", {class:"s", x:12, y:45});
+    g.append(r, t, s); gN.appendChild(g); nodeEls[n.id] = {g, r, t, s};
+    g.addEventListener("click", ev => { if (moved) return; ev.stopPropagation(); select(n.id); });
+    g.addEventListener("dblclick", ev => { ev.stopPropagation(); if (!current && n.topics && n.topics.length) openField(n.id); });
+    g.addEventListener("mousemove", ev => showTip(ev, n));
+    g.addEventListener("mouseleave", hideTip);
+    paint(n);
+  });
+  $("hint").textContent = current
+    ? "Topics inside this field. Click a topic for book, chapters and checkpoint. Dashed = optional."
+    : "Drag to pan, wheel to zoom. Click a field to see its topics; double-click (or 'Open') to see the topic map. Dashed = optional.";
+  fit();
+}
+
+function paint(n){
+  const {r, t, s} = nodeEls[n.id], c = CATS[n.cat].color;
+  if (!current) {
+    const [d, tot] = fieldProgress(n);
+    const full = tot && d === tot;
+    r.setAttribute("fill", n.cat === "goal" ? "#ececec" : c + (full ? "66" : "1c"));
+    t.textContent = (full ? "[x] " : "") + n.label;
+    s.textContent = n.short + (tot ? "   (" + d + "/" + tot + ")" : "");
+  } else {
+    const isDone = done.has(key(current, n.id));
+    r.setAttribute("fill", c + (isDone ? "66" : "1c"));
+    t.textContent = (isDone ? "[x] " : "") + n.label;
+    s.textContent = n.ch.length > 34 ? n.ch.slice(0, 33) + "..." : n.ch;
+  }
+}
+
+// ===================== HIGHLIGHT =====================
+const branchSel = $("branch"), modeSel = $("mode");
+function fillBranches(){
+  if (!current) {
+    branchSel.disabled = false;
+    branchSel.innerHTML = `<option value="all">All fields</option><option value="core">Minimal path to DP (no optional)</option>` +
+      Object.entries(CATS).filter(([k]) => k !== "goal").map(([k, v]) => `<option value="cat:${k}">${v.name}</option>`).join("");
+  } else {
+    branchSel.disabled = false;
+    branchSel.innerHTML = `<option value="all">All topics</option><option value="core">Core topics only (no optional)</option>`;
+  }
+}
+function visibleSet(){
+  if (selected) {
+    const m = modeSel.value, S = new Set([selected]);
+    if (m !== "desc") ancestors(selected).forEach(x => S.add(x));
+    if (m !== "anc") descendants(selected).forEach(x => S.add(x));
+    return S;
+  }
+  const b = branchSel.value;
+  if (b === "core") return new Set(items.filter(n => !n.optional).map(n => n.id));
+  if (b && b.startsWith("cat:")) { const c = b.slice(4); return new Set(items.filter(n => n.cat === c || n.cat === "goal").map(n => n.id)); }
+  return null;
+}
+function refresh(){
+  const S = visibleSet();
+  items.forEach(n => { const {g} = nodeEls[n.id];
+    g.classList.toggle("dim", !!S && !S.has(n.id)); g.classList.toggle("selected", n.id === selected); });
+  edgeEls.forEach(p => { const on = S && S.has(p._e.from) && S.has(p._e.to);
+    p.classList.toggle("dim", !!S && !on); p.classList.toggle("hot", !!(selected && on));
+    p.setAttribute("marker-end", selected && on ? "url(#arrHot)" : "url(#arr)"); });
+  let d = 0, tot = 0;
+  FIELDS.forEach(f => { const [a, b] = fieldProgress(f); d += a; tot += b; });
+  $("progress").textContent = `Progress: ${d} / ${tot} topics`;
+  crumbs(); panel();
+}
+function select(id){ selected = id; branchSel.value = "all"; refresh(); }
+branchSel.onchange = () => { selected = null; refresh(); };
+modeSel.onchange = refresh;
+$("clear").onclick = () => { selected = null; branchSel.value = "all"; refresh(); };
+
+function openField(id){ current = id; selected = null; fillBranches(); buildGraph(); render(); refresh(); }
+function closeField(){ const was = current; current = null; fillBranches(); buildGraph(); render(); selected = was; refresh(); }
+
+function crumbs(){
+  $("crumbs").innerHTML = current
+    ? `<a id="back">All fields</a> &gt; <b>${fieldById[current].label}</b>`
+    : `<b>All fields</b>`;
+  if (current) $("back").onclick = closeField;
+}
+
+// ===================== SIDE PANEL =====================
+const P = $("panel");
+const linkF = id => `<a data-f="${id}">${fieldById[id].label}</a>`;
+const linkT = id => `<a data-t="${id}">${byId[id].label}</a>`;
+
+function topicList(f){
+  const saveCur = current; // order topics by their layout inside the field
+  const tmp = f.topics.map(t => ({...t}));
+  const tb = Object.fromEntries(tmp.map(t => [t.id, t]));
+  const L = id => tb[id].deps.length ? 1 + Math.max(...tb[id].deps.map(L)) : 0;
+  tmp.forEach(t => t.l = L(t.id));
+  tmp.sort((a, b) => a.l - b.l);
+  return `<ol class="steps">` + tmp.map(t => {
+    const ok = done.has(key(f.id, t.id));
+    return `<li>${ok ? '<span class="ok">[x]</span> ' : ''}<a data-ot="${f.id}|${t.id}">${t.label}</a>` +
+      (t.optional ? ' <span class="opt">(optional)</span>' : '') + `</li>`; }).join("") + `</ol>`;
+}
+
+function panel(){
+  if (!current && !selected) {
+    const core = ordered().filter(n => !n.optional);
+    P.innerHTML = `<h2>How to read this map</h2>
+      <p>Each box is a field you need on the way to dynamic programming. Arrows go from prerequisite to the field it enables. Click a field to see the topics you must cover in it; double-click to open its topic map.</p>
+      <h3>Suggested order (core fields)</h3>
+      <ol class="steps">${core.map(n => `<li>${linkF(n.id)}</li>`).join("")}</ol>
+      <h3>Colours</h3><div class="legend">${Object.values(CATS).map(c => `<div><span class="sw" style="border-color:${c.color};background:${c.color}22"></span>${c.name}</div>`).join("")}</div>
+      <p style="margin-top:10px;color:#666">Dashed boxes and arrows are optional: useful, but not on the path to DP.</p>`;
+  } else if (!current) {
+    const f = fieldById[selected], c = CATS[f.cat];
+    const req = f.deps.map(linkF).join("") || "<span style='color:#888'>none - start here</span>";
+    const unl = children[f.id].map(linkF).join("") || "<span style='color:#888'>-</span>";
+    const [d, tot] = fieldProgress(f);
+    const books = [...new Set(f.topics.map(t => t.book))];
+    P.innerHTML = `<h2>${f.label}</h2>
+      <span class="pill" style="background:${c.color}">${c.name}</span>${f.optional ? '<span class="badge">optional</span>' : ''}
+      <h3>Why you need it</h3><p>${f.desc}</p>
+      ${tot ? `<h3>Topics to cover (${d}/${tot} done)</h3>${topicList(f)}
+      <h3>Books</h3><p>${books.join("<br>")}</p>` : ""}
+      <h3>Requires</h3><div class="links">${req}</div>
+      <h3>Unlocks</h3><div class="links">${unl}</div>
+      ${tot ? `<button class="open" id="openBtn">Open topic map</button>` : ""}`;
+    if (tot) $("openBtn").onclick = () => openField(f.id);
+  } else if (!selected) {
+    const f = fieldById[current];
+    P.innerHTML = `<h2>${f.label}</h2><p>${f.desc}</p>
+      <h3>Topics in order</h3>${topicList(f)}
+      <h3>Fields that depend on this one</h3><div class="links">${FIELDS.filter(g => g.deps.includes(f.id)).map(g => g.label).join(", ") || "-"}</div>`;
+  } else {
+    const f = fieldById[current], t = byId[selected], c = CATS[f.cat];
+    const req = t.deps.map(linkT).join("") || "<span style='color:#888'>none - start of this field</span>";
+    const unl = children[t.id].map(linkT).join("") || "<span style='color:#888'>-</span>";
+    const k = key(f.id, t.id);
+    P.innerHTML = `<h2>${t.label}</h2>
+      <span class="pill" style="background:${c.color}">${f.label}</span>${t.optional ? '<span class="badge">optional</span>' : ''}
+      <h3>Book</h3><p>${t.book}</p>
+      <h3>Chapters / sections</h3><p>${t.ch}</p>
+      <h3>Why it matters for DP</h3><p>${t.why}</p>
+      <h3>You are ready when</h3><p>${t.check}</p>
+      <h3>Requires</h3><div class="links">${req}</div>
+      <h3>Unlocks</h3><div class="links">${unl}</div>
+      <label class="done-row"><input type="checkbox" id="doneBox" ${done.has(k) ? "checked" : ""}> Mark as done</label>`;
+    $("doneBox").onchange = e => { e.target.checked ? done.add(k) : done.delete(k); saveDone(); paint(t); refresh(); };
+  }
+  P.querySelectorAll("[data-f]").forEach(a => a.onclick = () => select(a.dataset.f));
+  P.querySelectorAll("[data-t]").forEach(a => a.onclick = () => select(a.dataset.t));
+  P.querySelectorAll("[data-ot]").forEach(a => a.onclick = () => {
+    const [fid, tid] = a.dataset.ot.split("|");
+    if (current !== fid) openField(fid);
+    select(tid);
+  });
+}
+
+// ===================== TOOLTIP =====================
+const tip = $("tip"), canvas = $("canvas");
+function showTip(ev, n){
+  const b = canvas.getBoundingClientRect();
+  tip.innerHTML = current ? `<b>${n.label}</b><br>${n.book}<br>${n.ch}`
+    : `<b>${n.label}</b><br>${n.desc}`;
+  tip.style.display = "block";
+  tip.style.left = Math.min(ev.clientX - b.left + 14, b.width - 310) + "px";
+  tip.style.top = (ev.clientY - b.top + 14) + "px";
+}
+function hideTip(){ tip.style.display = "none"; }
+
+// ===================== PAN & ZOOM =====================
+let view = {x:0, y:0, k:1}, moved = false, drag = null;
+const apply = () => world.setAttribute("transform", `translate(${view.x},${view.y}) scale(${view.k})`);
+function zoomAt(f, cx, cy){
+  const k = Math.min(3, Math.max(0.2, view.k * f)); f = k / view.k;
+  view.x = cx - (cx - view.x) * f; view.y = cy - (cy - view.y) * f; view.k = k; apply();
+}
+svg.addEventListener("wheel", e => { e.preventDefault(); const b = svg.getBoundingClientRect();
+  zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - b.left, e.clientY - b.top); }, {passive:false});
+svg.addEventListener("pointerdown", e => { drag = {x:e.clientX, y:e.clientY, vx:view.x, vy:view.y}; moved = false; });
+window.addEventListener("pointermove", e => { if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 4) { moved = true; canvas.classList.add("dragging"); hideTip(); }
+  if (moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; apply(); } });
+window.addEventListener("pointerup", () => { drag = null; canvas.classList.remove("dragging"); setTimeout(() => moved = false, 0); });
+svg.addEventListener("click", () => { if (!moved && selected) { selected = null; refresh(); } });
+const center = () => { const b = svg.getBoundingClientRect(); return [b.width / 2, b.height / 2]; };
+$("zin").onclick = () => zoomAt(1.25, ...center());
+$("zout").onclick = () => zoomAt(0.8, ...center());
+function fit(){
+  const b = svg.getBoundingClientRect();
+  const xs = allPts.map(n => n.x), ys = allPts.map(n => n.y);
+  const x0 = Math.min(...xs) - 30, x1 = Math.max(...xs) + W + 30, y0 = Math.min(...ys) - 30, y1 = Math.max(...ys) + H + 30;
+  view.k = Math.min(b.width / (x1 - x0), b.height / (y1 - y0), 1.3);
+  view.x = (b.width - (x1 - x0) * view.k) / 2 - x0 * view.k;
+  view.y = (b.height - (y1 - y0) * view.k) / 2 - y0 * view.k; apply();
+}
+$("fit").onclick = fit;
+window.addEventListener("resize", fit);
+
+// ===================== START =====================
+fillBranches(); buildGraph(); render(); refresh();
+</script>
+</body>
+</html>
