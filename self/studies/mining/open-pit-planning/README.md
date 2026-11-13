@@ -1,3 +1,5 @@
+# Open Pit Mine Planning
+
 Resources:
 
 ```bibtex
@@ -27,3 +29,11 @@ Resources:
   url          = {https://doi.org/10.5281/zenodo.24045829},
 }
 ```
+
+## Structure
+
+| Path | Contents |
+|---|---|
+| `00-get-dataset.ipynb` | Downloads the Cerro Wayra dataset from Zenodo |
+
+[<- Back to mining](../README.md)

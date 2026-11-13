@@ -26,3 +26,7 @@ research/
     |- benchmarks/           # Dataset instances (e.g., standard block models)
     |- src/                  # Reproduction of the paper (Python calling yupana): experiments, validation, visualization
 ```
+
+See [`yupana/README.md`](./yupana/README.md) for build instructions.
+
+[<- Back to self](../README.md)

@@ -1,7 +1,9 @@
 master/IMCA/20262/courses/MMC007/classes/tmp/
 tmp/
 data/
+ssh/
 electronics/
+.secrets
 *.xopp
 .*
 a.out
@@ -18,4 +20,6 @@ self/dsa/
 master/IMCA/20262/courses/MMC007/exercises/calificada-I-estudio_annotated*.pdf
 master/IMCA/20262/courses/MMC007/optimization_complete_map.html
 fv/
-self/mining/open-pit-planning/
+studies/mining/open-pit-planning/datasets/
+build/
+self/research/yupana/build/
