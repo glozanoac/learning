@@ -1,2 +1,0 @@
-/usr/bin/ar qc libyupana.a CMakeFiles/yupana.dir/src/csr.c.o
-/usr/bin/ranlib libyupana.a
