@@ -24,6 +24,7 @@ classes/
 | `ch4.pdf` | Constrained optimality: tangent cone, constraint qualifications, Farkas, KKT, Lagrange duality | NW 12, B 3, 5 |
 | `ch5.pdf`, `ch5-v2.pdf` | Trust-region methods: exact solution, Cauchy point, dogleg, global convergence | NW 4 |
 | `ch6.pdf` | Large-scale methods (conjugate gradient) | NW 5, 7 |
+| `ch9.pdf` | Optimality conditions with constraints: minimization over an arbitrary set, tangent cone, first- and second-order conditions, equality constraints (Lagrange multipliers); worked example on pressure vessel design | NW 12, B 3 |
 
 `-v2` and later revisions replace the original file; `ch5-v2.pdf` adds the motivation section.
 
