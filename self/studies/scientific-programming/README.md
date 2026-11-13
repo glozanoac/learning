@@ -12,6 +12,7 @@ Analysis of the books:
 }
 ```
 
+LESSONS: `01-10`
 ```bibtex
 @book{chapman2007openmp,
   author    = {Chapman, Barbara and Jost, Gabriele and van der Pas, Ruud},
@@ -24,6 +25,8 @@ Analysis of the books:
 }
 ```
 
+
+LESSONS: `12-`
 ```bibtex
 @book{vanderpas2017openmp,
   author    = {van der Pas, Ruud and Stotzer, Eric and Terboven, Christian},
@@ -36,6 +39,7 @@ Analysis of the books:
 }
 ```
 
+LESSONS: `-`
 ```bibtex
 @book{deakin2023gpu,
   author    = {Deakin, Tom and Mattson, Timothy G.},
