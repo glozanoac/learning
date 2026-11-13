@@ -9,9 +9,24 @@
 | Stochastic Open-Pit Production Scheduling (cut-off grade and destination policy) | Stochastic mixed-integer programming |
 | Real-Time Truck-Shovel Dispatching | Stochastic dynamic programming |
 
-## Map
+## Workflow
 
-| Directory | Contents |
-|---|---|
-| [`master/`](./master/) | Master's coursework (IMCA-UNI) |
-| [`self/`](./self/) | Self-directed studies and research |
+```txt
+master/
+    Program courses
+        |
+        | formal base; gaps to fill
+        v
+self/
+  studies/
+    Stochastic MIP                                scientific-programming
+    Stochastic DP                                 (C, OpenMP, HPC)
+    Mine planning
+        |                                             |
+        | theory and Python prototypes                | C and OpenMP skills
+        v                                             v
+  research/
+    <topic>                          <------>     yupana
+    reproduce mine planning papers                research on numerical methods:
+                                                  C + OpenMP kernels
+```
