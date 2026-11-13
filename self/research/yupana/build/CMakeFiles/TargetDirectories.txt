@@ -1,0 +1,4 @@
+/home/glozanoac/projects/self/research/yupana/build/CMakeFiles/yupana.dir
+/home/glozanoac/projects/self/research/yupana/build/CMakeFiles/hello.dir
+/home/glozanoac/projects/self/research/yupana/build/CMakeFiles/edit_cache.dir
+/home/glozanoac/projects/self/research/yupana/build/CMakeFiles/rebuild_cache.dir
