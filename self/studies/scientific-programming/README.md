@@ -56,26 +56,39 @@ LESSONS: `-`
 }
 ```
 
+LESSONS: `20-`
+```bibtex
+@book{saad2003iterative,
+  author    = {Saad, Yousef},
+  title     = {Iterative Methods for Sparse Linear Systems},
+  edition   = {2nd},
+  publisher = {SIAM},
+  address   = {Philadelphia, PA},
+  year      = {2003},
+  isbn      = {978-0-89871-534-7}
+}
+```
+
 ## Lessons
 
-Each lesson folder has the notes (`.tex/.pdf`) and the C example(s). Build an example with `gcc -fopenmp -O2 file.c` and run it with `OMP_NUM_THREADS=4 ./a.out`.
+Each lesson folder has the notes (`.tex/.pdf`) and the C example(s).
 
-| Folder | Topic |
-|---|---|
-| [`00-0-setup-local/`](./00-0-setup-local/GUIDE.md) | Local setup: C, OpenMP and GPU offload toolchain |
-| [`00-1-slurm-cluster/`](./00-1-slurm-cluster/) | Ansible guides to provision a Slurm cluster (single controller; HA with accounting, login node and NFS) |
-| `01-openmp-fork-join/` | Fork-join model, first parallel region |
-| `02-openmp-shared-private/` | Shared and private variables |
-| `03-openmp-sync-reduction/` | Race conditions, synchronization and reductions |
-| `04-openmp-parallel-for/` | Parallel loops |
-| `05-openmp-schedule/` | Loop scheduling (static, dynamic, guided) |
-| `06-openmp-barrier-single-sections/` | Barrier, single and sections |
-| `07-openmp-firstprivate-lastprivate/` | Data clauses: firstprivate and lastprivate |
-| `08-openmp-false-sharing/` | False sharing |
-| `09-openmp-locks/` | Locks |
-| `10-openmp-thread-sanitizer/` | Finding data races with ThreadSanitizer |
-| [`11-openmp-spmv-csr/`](./11-openmp-spmv-csr/spmv/) | Parallel sparse matrix-vector product (CSR) |
-| `12-openmp-tasks/` | Tasks: Fibonacci and quicksort |
-| `20-io/` | Sparse matrix storage and I/O: dense vs CSR, COO to CSR |
+| Folder | Topic | Book |
+|---|---|---|
+| [`00-0-setup-local/`](./00-0-setup-local/GUIDE.md) | Local setup: C, OpenMP and GPU offload toolchain | All four books |
+| [`00-1-slurm-cluster/`](./00-1-slurm-cluster/) | Ansible guides to provision a Slurm cluster (single controller; HA with accounting, login node and NFS) | - |
+| [`01-openmp-fork-join/`](./01-openmp-fork-join/) | Fork-join model, first parallel region | Chapman et al. (2007) |
+| [`02-openmp-shared-private/`](./02-openmp-shared-private/) | Shared and private variables | Chapman et al. (2007) |
+| [`03-openmp-sync-reduction/`](./03-openmp-sync-reduction/) | Race conditions, synchronization and reductions | Chapman et al. (2007) |
+| [`04-openmp-parallel-for/`](./04-openmp-parallel-for/) | Parallel loops | Chapman et al. (2007) |
+| [`05-openmp-schedule/`](./05-openmp-schedule/) | Loop scheduling (static, dynamic, guided) | Chapman et al. (2007) |
+| [`06-openmp-barrier-single-sections/`](./06-openmp-barrier-single-sections/) | Barrier, single and sections | Chapman et al. (2007) |
+| [`07-openmp-firstprivate-lastprivate/`](./07-openmp-firstprivate-lastprivate/) | Data clauses: firstprivate and lastprivate | Chapman et al. (2007) |
+| [`08-openmp-false-sharing/`](./08-openmp-false-sharing/) | False sharing | Chapman et al. (2007) |
+| [`09-openmp-locks/`](./09-openmp-locks/) | Locks | Chapman et al. (2007) |
+| [`10-openmp-thread-sanitizer/`](./10-openmp-thread-sanitizer/) | Finding data races with ThreadSanitizer | Chapman et al. (2007) |
+| [`11-openmp-spmv-csr/`](./11-openmp-spmv-csr/spmv/) | Parallel sparse matrix-vector product (CSR) | Chapman et al. (2007), van der Pas et al. (2017) |
+| [`12-openmp-tasks/`](./12-openmp-tasks/) | Tasks: Fibonacci and quicksort | van der Pas et al. (2017) |
+| [`20-io/`](./20-io/) | Sparse matrix storage and I/O: dense vs CSR, COO to CSR | Saad (2003) |
 
 [<- Back to studies](../README.md)

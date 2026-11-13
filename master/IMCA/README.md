@@ -1,13 +1,6 @@
 # Mathematical and Computational Modeling - IMCA
 
-Master in Mathematical and Computational Modeling at IMCA (Instituto de Matematica y Ciencias Afines) - UNI (Universidad Nacional de Ingenieria), Lima, Peru. The program teaches how to describe real problems with mathematics and solve them with computers. The full study plan is in [`curriculum.pdf`](./curriculum.pdf).
-
-## Courses
-### II
-* **MMC007**: Optimization (aka. Continuous Optimization)
-
-### III
-* **MMC201**: Theory and Models of Machine Learning (elective)
+The program teaches how to describe real problems with mathematics and solve them with computers. The full study plan is in [`curriculum.pdf`](./curriculum.pdf).
 
 ## Structure
 
