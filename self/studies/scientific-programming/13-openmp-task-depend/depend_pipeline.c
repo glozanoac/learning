@@ -22,8 +22,34 @@ static double x[NB], y[NB];
 static int cost1(int b) { return b == 0 ? 100 : 10; }   /* ms */
 static int cost2(int b) { return b == 0 ? 10 : 100; }   /* ms */
 
-static void stage1(int b) { usleep(1000 * cost1(b)); x[b] = b + 1.0; }
-static void stage2(int b) { usleep(1000 * cost2(b)); y[b] = 2.0 * x[b]; }
+/* per block and stage: thread, start and end time (ms since t0) */
+static double t0;
+static int    thr[2][NB];
+static double beg[2][NB], end[2][NB];
+
+static void stage1(int b)
+{
+    thr[0][b] = omp_get_thread_num();
+    beg[0][b] = 1000.0 * (omp_get_wtime() - t0);
+    usleep(1000 * cost1(b)); x[b] = b + 1.0;
+    end[0][b] = 1000.0 * (omp_get_wtime() - t0);
+}
+
+static void stage2(int b)
+{
+    thr[1][b] = omp_get_thread_num();
+    beg[1][b] = 1000.0 * (omp_get_wtime() - t0);
+    usleep(1000 * cost2(b)); y[b] = 2.0 * x[b];
+    end[1][b] = 1000.0 * (omp_get_wtime() - t0);
+}
+
+static void report(void)
+{
+    printf("  block | stage1: thread start  end | stage2: thread start  end   (ms)\n");
+    for (int b = 0; b < NB; b++)
+        printf("  %5d | %13d %5.0f %4.0f | %13d %5.0f %4.0f\n", b,
+               thr[0][b], beg[0][b], end[0][b], thr[1][b], beg[1][b], end[1][b]);
+}
 
 static void reset(void)
 {
@@ -39,11 +65,9 @@ static const char *check(void)
 
 int main(void)
 {
-    double t;
-
     /* ---- 1) barrier: every stage-1 task must finish before stage 2 ---- */
     reset();
-    t = omp_get_wtime();
+    t0 = omp_get_wtime();
     #pragma omp parallel
     #pragma omp single
     {
@@ -57,11 +81,12 @@ int main(void)
             stage2(b);
         }
     }
-    printf("barrier : %.3f s   correct: %s\n", omp_get_wtime() - t, check());
+    printf("barrier : %.3f s   correct: %s\n", omp_get_wtime() - t0, check());
+    report();
 
     /* ---- 2) depend: stage 2 of block b waits only for stage 1 of block b ---- */
     reset();
-    t = omp_get_wtime();
+    t0 = omp_get_wtime();
     #pragma omp parallel
     #pragma omp single
     {
@@ -72,7 +97,8 @@ int main(void)
             stage2(b);
         }
     }                                 /* all tasks are done at this barrier */
-    printf("depend  : %.3f s   correct: %s\n", omp_get_wtime() - t, check());
+    printf("depend  : %.3f s   correct: %s\n", omp_get_wtime() - t0, check());
+    report();
 
     printf("threads = %d\n", omp_get_max_threads());
     return 0;

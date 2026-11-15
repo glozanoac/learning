@@ -45,7 +45,7 @@
 \maketitle
 
 \noindent\textit{\small Source: van der Pas, Stotzer \& Terboven~\cite{vdp}, chapter on tasking
-(task dependences, added in OpenMP~4.0). Prerequisite: \texttt{openmp\_tasks.pdf} (Lesson 12).}
+(task dependences, added in OpenMP~4.0). Prerequisite: \texttt{00-openmp\_tasks.pdf} (Lesson 12).}
 
 \section{The idea}
 In Lesson~12 the only way to wait for tasks was \texttt{taskwait}: wait for \emph{all} the
@@ -112,6 +112,8 @@ stage2(b);
 Stage costs are chosen so that the difference shows: block 0 is slow in stage~1 (100\,ms,
 the others 10\,ms); in stage~2 it is the other way round (block 0: 10\,ms, the others
 100\,ms). The work is simulated with \texttt{usleep}, so the times do not depend on your CPU.
+Each stage records the thread that ran it and its start and end times (ms since the start of
+the version); \texttt{report} prints them as a table.
 
 \lstinputlisting[caption={\textbf{\origtexttt{depend\_pipeline.c}} -- two-stage pipeline, with \origtexttt{taskwait} and with \origtexttt{depend}.}, label={lst:dep}]{depend_pipeline.c}
 
@@ -149,15 +151,37 @@ OMP_NUM_THREADS=8 ./depend_pipeline
   \foreach \x in {0,110,200} {\draw (\x,0.4) -- (\x,0.6); \node[below] at (\x,0.4) {\x};}
   \end{scope}
 \end{tikzpicture}
-\caption{8 threads. (a) The stage-2 tasks wait 90\,ms for S1(0): 200\,ms in total.
-(b) Each S2($b$) starts right after its own S1($b$): 110\,ms.}
+\caption{8 threads, one possible assignment of tasks to threads. (a) The stage-2 tasks wait
+90\,ms for S1(0): 200\,ms in total. (b) Each S2($b$) starts right after its own S1($b$):
+110\,ms.}
 \end{figure}
-Output with 8 threads:
-\begin{lstlisting}[style=sh]
+Output with 8 threads (the thread numbers change from run to run):
+\begin{lstlisting}[style=sh, basicstyle=\ttfamily\footnotesize]
 barrier : 0.201 s   correct: yes
+  block | stage1: thread start  end | stage2: thread start  end   (ms)
+      0 |             2     0  101 |             4   101  111
+      1 |             0     0   10 |             3   101  201
+      2 |             1     0   11 |             5   101  201
+      3 |             4     0   11 |             6   101  201
+      4 |             5     0   10 |             7   101  201
+      5 |             6     0   10 |             1   101  201
+      6 |             3     0   10 |             0   101  201
+      7 |             7     0   10 |             2   101  201
 depend  : 0.111 s   correct: yes
+  block | stage1: thread start  end | stage2: thread start  end   (ms)
+      0 |             4     0  100 |             4   100  110
+      1 |             1     0   10 |             1    10  110
+      2 |             0     0   10 |             0    10  110
+      3 |             2     0   10 |             2    10  110
+      4 |             7     0   10 |             7    10  110
+      5 |             3     0   10 |             3    10  110
+      6 |             6     0   10 |             6    10  110
+      7 |             5     0   10 |             5    10  111
 threads = 8
 \end{lstlisting}
+In the \texttt{barrier} table every stage~2 starts at about 101\,ms, after S1(0) ends; in the
+\texttt{depend} table S2($b$) starts when S1($b$) ends (10\,ms, or 100\,ms for block 0).
+S1(0) ran on thread 2 in the first version and on thread 4 in the second: any thread can run any task.
 
 \begin{keyidea}
 \begin{itemize}
@@ -178,7 +202,7 @@ missing?
 \begin{lstlisting}[style=sh]
 for t in 1 2 4 8; do OMP_NUM_THREADS=$t ./depend_pipeline; echo; done
 \end{lstlisting}
-  \item Remove \texttt{depend(in: x[b])} from the stage-2 task (line~71 of
+  \item Remove \texttt{depend(in: x[b])} from the stage-2 task (line~96 of
         Listing~\ref{lst:dep}), recompile, and run three times with 4 threads.
 \end{enumerate}
 \textbf{What to observe and answer.}
@@ -207,8 +231,8 @@ same block has written \texttt{x[b]}; it then reads the old value 0 and writes
 $\texttt{y[b]} = 0$. It is faster only because it waits for nothing. A missing dependency is
 a data race, like the ones in Lessons~2 and 10.
 
-\paragraph{Second example.} \texttt{openmp\_task\_depend\_trsv.pdf}: \texttt{depend} on a
-realistic problem, the sparse triangular solve (forward substitution) from Saad~\cite{saad}.
+\paragraph{Second example.} A realistic use of \texttt{depend}: the sparse triangular solve
+from Saad~\cite{saad}, in\\ \texttt{01-openmp\_task\_depend\_trsv.pdf}.
 
 \begin{thebibliography}{9}
 \bibitem{vdp} R.~van der Pas, E.~Stotzer, and C.~Terboven. \emph{Using OpenMP --- The Next
