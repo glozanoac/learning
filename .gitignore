@@ -23,3 +23,6 @@ fv/
 studies/mining/open-pit-planning/datasets/
 build/
 self/research/yupana/build/
+
+# research papers
+self/research/limited_memory_cg/papers/*.pdf
