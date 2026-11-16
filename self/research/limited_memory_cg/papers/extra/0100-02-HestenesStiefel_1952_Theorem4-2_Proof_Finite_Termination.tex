@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newtheorem*{theorem}{Theorem 4:2}
+\newtheorem{lemma}{Lemma}
+
+\title{A Formal Proof of Theorem 4:2 of Hestenes--Stiefel (1952)\\
+\large Finite Termination of the Method of Conjugate Directions}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Setting}
+
+Let $A \in \mathbb{R}^{n\times n}$ be symmetric positive definite, $k \in \mathbb{R}^n$,
+and let $h$ be the unique solution of $Ah = k$. Write $(x,y) = x^{\top}y$.
+
+The cd-method starts from $x_0$, sets $r_0 = k - Ax_0$, and for $i = 0, 1, \dots$ computes
+\begin{align}
+a_i &= \frac{(p_i, r_i)}{(p_i, Ap_i)}, \tag{4:1a}\\
+x_{i+1} &= x_i + a_i p_i, \tag{4:1b}\\
+r_{i+1} &= r_i - a_i A p_i, \tag{4:1c}
+\end{align}
+where the directions $p_0, p_1, \dots, p_{n-1}$ are nonzero and satisfy
+\begin{equation}
+(p_{i+1}, A p_j) = 0 \qquad (j = 0, 1, \dots, i). \tag{4:2}
+\end{equation}
+Such directions can always be chosen: if $p_0, \dots, p_i$ have been chosen with $i+1 < n$,
+the set of vectors $A$-orthogonal to all of them is the orthogonal complement of
+$\operatorname{span}\{Ap_0, \dots, Ap_i\}$, which has dimension at least $n - i - 1 \ge 1$.
+
+From Theorem 4:1 we use
+\begin{align}
+(p_i, Ap_j) &= 0 \qquad (i \neq j), \tag{4:3a}\\
+a_i &= \frac{(p_i, r_0)}{(p_i, Ap_i)}. \tag{4:4}
+\end{align}
+
+For $q = 0, 1, \dots, n$ define the subspaces
+\[
+V_q = \operatorname{span}\{p_0, \dots, p_{q-1}\}, \qquad V_0 = \{0\},
+\]
+and the initial error $y_0 = h - x_0$.
+
+\begin{theorem}
+Let $m$ be the smallest integer $q \in \{0, 1, \dots, n\}$ such that $y_0 \in V_q$. Then
+\begin{enumerate}
+\item[\textup{(i)}] $m$ is well defined and $m \le n$;
+\item[\textup{(ii)}] $x_m = h$;
+\item[\textup{(iii)}] $x_q \neq h$ for $q < m$.
+\end{enumerate}
+In particular, the cd-method is an $m$-step method with $m \le n$.
+\end{theorem}
+
+\section*{Proof}
+
+\begin{lemma}\label{lem:indep}
+The vectors $p_0, \dots, p_{n-1}$ are linearly independent. Consequently
+$\dim V_q = q$ for $q = 0, \dots, n$, and $V_n = \mathbb{R}^n$.
+\end{lemma}
+
+\begin{proof}
+Suppose $\sum_{i=0}^{n-1} c_i p_i = 0$. Fix $j$ and take the inner product with $Ap_j$.
+By (4:3a) all terms with $i \neq j$ vanish, leaving $c_j (p_j, Ap_j) = 0$.
+Since $p_j \neq 0$ and $A$ is positive definite, $(p_j, Ap_j) > 0$, so $c_j = 0$.
+As $j$ was arbitrary, the vectors are independent. Hence $V_q$ is spanned by $q$
+independent vectors, so $\dim V_q = q$, and $V_n$ is an $n$-dimensional subspace of
+$\mathbb{R}^n$, i.e.\ $V_n = \mathbb{R}^n$.
+\end{proof}
+
+\begin{lemma}\label{lem:iterate}
+For $q = 0, 1, \dots, n$,
+\[
+x_q = x_0 + \sum_{i=0}^{q-1} a_i p_i .
+\]
+In particular, $x_q - x_0 \in V_q$.
+\end{lemma}
+
+\begin{proof}
+By induction on $q$. For $q = 0$ the sum is empty. If the formula holds for $q$, then
+by (4:1b), $x_{q+1} = x_q + a_q p_q = x_0 + \sum_{i=0}^{q} a_i p_i$.
+\end{proof}
+
+\paragraph{Proof of (i).}
+The set $S = \{ q \in \{0, \dots, n\} : y_0 \in V_q \}$ contains $n$, because
+$V_n = \mathbb{R}^n$ by Lemma~\ref{lem:indep}. Thus $S$ is a nonempty finite set of
+integers, so its minimum $m$ exists and $m \le n$. \hfill$\square$
+
+\paragraph{Proof of (ii).}
+If $m = 0$, then $y_0 \in V_0 = \{0\}$, so $x_0 = h$ and there is nothing to prove.
+
+Let $m \ge 1$. Since $y_0 \in V_m$, there are scalars $\alpha_0, \dots, \alpha_{m-1}$ with
+\begin{equation}
+y_0 = \sum_{j=0}^{m-1} \alpha_j p_j. \tag{1}
+\end{equation}
+Because $Ah = k$,
+\begin{equation}
+r_0 = k - Ax_0 = A(h - x_0) = Ay_0 = \sum_{j=0}^{m-1} \alpha_j A p_j. \tag{2}
+\end{equation}
+Fix $i \in \{0, \dots, m-1\}$ and take the inner product of (2) with $p_i$. By (4:3a)
+only the term $j = i$ survives:
+\[
+(p_i, r_0) = \alpha_i (p_i, Ap_i).
+\]
+Since $(p_i, Ap_i) > 0$, comparison with (4:4) gives
+\begin{equation}
+\alpha_i = \frac{(p_i, r_0)}{(p_i, Ap_i)} = a_i \qquad (i = 0, \dots, m-1). \tag{3}
+\end{equation}
+By Lemma~\ref{lem:iterate}, (3) and (1),
+\[
+x_m = x_0 + \sum_{i=0}^{m-1} a_i p_i = x_0 + \sum_{i=0}^{m-1} \alpha_i p_i = x_0 + y_0 = h.
+\]
+\hfill$\square$
+
+\paragraph{Proof of (iii).}
+Let $q < m$ and suppose $x_q = h$. By Lemma~\ref{lem:iterate},
+$y_0 = h - x_0 = x_q - x_0 \in V_q$, so $q \in S$ with $q < m = \min S$,
+a contradiction. Hence $x_q \neq h$. \hfill$\square$
+
+\medskip
+This completes the proof of Theorem 4:2. \hfill$\blacksquare$
+
+\end{document}
