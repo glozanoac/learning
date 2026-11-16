@@ -1,0 +1,298 @@
+% CG Analysis -- reading list toward Hager & Zhang (2013)
+%
+% file: paths are relative to the project folder (papers/). "to download" = expected filename to save as.
+%
+% Entries are listed in READING ORDER (4-digit prefix, step 100; insert with midpoints, e.g. 0150).
+% Header of each entry:
+%   prefix: short description
+%   prev / next  -> linear reading order
+%   needs / unlocks -> DAG edges (prerequisites / what this paper opens)
+
+% 0100: Linear CG. Solves Ax=k for SPD A; conjugate directions, finite termination in n steps,
+%       monotone decrease of the error, rounding-error analysis, the B-generalization BAx=Bk.
+%   prev: --                    next: 0200 FletcherReeves1964
+%   needs: --                   unlocks: 0200 FletcherReeves1964, 1500 Paige1976
+%   file: papers/0100-HestenesStiefel_1952_Methods_of_Conjugate_Gradients_Linear_Systems.pdf
+@article{HestenesStiefel1952,
+  author    = {Hestenes, Magnus R. and Stiefel, Eduard},
+  title     = {Methods of Conjugate Gradients for Solving Linear Systems},
+  journal   = {Journal of Research of the National Bureau of Standards},
+  volume    = {49},
+  number    = {6},
+  pages     = {409--436},
+  year      = {1952},
+  doi       = {10.6028/jres.049.044},
+  note      = {Research Paper 2379}
+}
+
+% 0200: Nonlinear CG. First extension of CG to minimizing a general f: d_{k+1} = -g_{k+1} + beta_k d_k
+%       with the FR choice beta = ||g_{k+1}||^2/||g_k||^2, plus line search and restarts.
+%   prev: 0100 HestenesStiefel1952   next: 0300 Wolfe1969
+%   needs: 0100 HestenesStiefel1952  unlocks: 0500 Powell1986, 1000 Shanno1978
+%   file: papers/0200-FletcherReeves_1964_Function_Minimization_by_Conjugate_Gradients.pdf
+@article{FletcherReeves1964,
+  author    = {Fletcher, R. and Reeves, C. M.},
+  title     = {Function Minimization by Conjugate Gradients},
+  journal   = {The Computer Journal},
+  volume    = {7},
+  number    = {2},
+  pages     = {149--154},
+  year      = {1964},
+  doi       = {10.1093/comjnl/7.2.149}
+}
+
+% 0300: Line search. Introduces the Wolfe conditions (sufficient decrease + curvature) and shows
+%       they guarantee convergence of descent methods (Zoutendijk-type argument).
+%   prev: 0200 FletcherReeves1964    next: 0400 Wolfe1971
+%   needs: --                        unlocks: 0400 Wolfe1971
+%   file: papers/0300-Wolfe_1969_Convergence_Conditions_for_Ascent_Methods.pdf
+@article{Wolfe1969,
+  author    = {Wolfe, Philip},
+  title     = {Convergence Conditions for Ascent Methods},
+  journal   = {SIAM Review},
+  volume    = {11},
+  number    = {2},
+  pages     = {226--235},
+  year      = {1969},
+  doi       = {10.1137/1011036}
+}
+
+% 0400: Line search (erratum). Corrects and completes the 1969 results. Short; read right after 0300.
+%   prev: 0300 Wolfe1969             next: 0500 Powell1986
+%   needs: 0300 Wolfe1969            unlocks: 0600 GilbertNocedal1992
+%   file: papers/0400-Wolfe_1971_Convergence_Conditions_for_Ascent_Methods_II.pdf
+@article{Wolfe1971,
+  author    = {Wolfe, Philip},
+  title     = {Convergence Conditions for Ascent Methods. {II}: Some Corrections},
+  journal   = {SIAM Review},
+  volume    = {13},
+  number    = {2},
+  pages     = {185--188},
+  year      = {1971},
+  doi       = {10.1137/1013035}
+}
+
+% 0500: Convergence theory. Review of convergence of nonlinear optimization algorithms, including the
+%       counterexample showing PRP can cycle; motivates truncating beta (beta^+ = max{beta,0}).
+%   prev: 0400 Wolfe1971             next: 0600 GilbertNocedal1992
+%   needs: 0200 FletcherReeves1964   unlocks: 0600 GilbertNocedal1992
+%   file: papers/0500-Powell_1986_Convergence_Properties_Nonlinear_Optimization.pdf
+@article{Powell1986,
+  author    = {Powell, M. J. D.},
+  title     = {Convergence Properties of Algorithms for Nonlinear Optimization},
+  journal   = {SIAM Review},
+  volume    = {28},
+  number    = {4},
+  pages     = {487--500},
+  year      = {1986},
+  doi       = {10.1137/1028154}
+}
+
+% 0600: Convergence theory. Global convergence of nonlinear CG without restarts under practical
+%       (Wolfe) line searches; proves PRP+ converges. Proof template reused in 102, Thm 6.2.
+%   prev: 0500 Powell1986            next: 0700 DaiYuan1999
+%   needs: 0500 Powell1986, 0400 Wolfe1971   unlocks: 0700 DaiYuan1999
+%   file: papers/0600-GilbertNocedal_1992_Global_Convergence_CG_Methods.pdf
+@article{GilbertNocedal1992,
+  author    = {Gilbert, Jean Charles and Nocedal, Jorge},
+  title     = {Global Convergence Properties of Conjugate Gradient Methods for Optimization},
+  journal   = {SIAM Journal on Optimization},
+  volume    = {2},
+  number    = {1},
+  pages     = {21--42},
+  year      = {1992},
+  doi       = {10.1137/0802003}
+}
+
+% 0700: Nonlinear CG. The DY beta formula: descent direction at every step under a standard Wolfe
+%       line search. Closest competitor to CG_DESCENT; short paper.
+%   prev: 0600 GilbertNocedal1992    next: 0800 HagerZhang2005
+%   needs: 0600 GilbertNocedal1992   unlocks: 0800 HagerZhang2005
+%   file: papers/0700-DaiYuan_1999_Nonlinear_CG_Strong_Global_Convergence.pdf
+@article{DaiYuan1999,
+  author    = {Dai, Y. H. and Yuan, Y.},
+  title     = {A Nonlinear Conjugate Gradient Method with a Strong Global Convergence Property},
+  journal   = {SIAM Journal on Optimization},
+  volume    = {10},
+  number    = {1},
+  pages     = {177--182},
+  year      = {1999},
+  doi       = {10.1137/S1052623497318992}
+}
+
+% 0800: CG_DESCENT theory. New beta (theta = 2) guaranteeing sufficient descent independent of the
+%       line search; approximate Wolfe line search; global convergence proof.
+%   prev: 0700 DaiYuan1999           next: 0900 HagerZhang2006a
+%   needs: 0700 DaiYuan1999          unlocks: 0900 HagerZhang2006a, 1600 HagerZhang2006b
+%   file: papers/0800-HagerZhang_2005_CG_Guaranteed_Descent_Efficient_Line_Search.pdf
+@article{HagerZhang2005,
+  author    = {Hager, William W. and Zhang, Hongchao},
+  title     = {A New Conjugate Gradient Method with Guaranteed Descent and an Efficient Line Search},
+  journal   = {SIAM Journal on Optimization},
+  volume    = {16},
+  number    = {1},
+  pages     = {170--192},
+  year      = {2005},
+  doi       = {10.1137/030601880}
+}
+
+% 0900: CG_DESCENT software. Implementation details of the 2005 method (line search parameters,
+%       stopping rules) and numerical comparison with L-BFGS and PRP+ on CUTEr.
+%   prev: 0800 HagerZhang2005        next: 1000 Shanno1978
+%   needs: 0800 HagerZhang2005       unlocks: 1800 HagerZhang2013
+%   file: papers/0900-HagerZhang_2006_CG_DESCENT_Guaranteed_Descent.pdf
+@article{HagerZhang2006a,
+  author    = {Hager, William W. and Zhang, Hongchao},
+  title     = {Algorithm 851: {CG\_DESCENT}, a Conjugate Gradient Method with Guaranteed Descent},
+  journal   = {ACM Transactions on Mathematical Software},
+  volume    = {32},
+  number    = {1},
+  pages     = {113--137},
+  year      = {2006},
+  doi       = {10.1145/1132973.1132979}
+}
+
+% 1000: CG <-> quasi-Newton. Views CG as memoryless BFGS (building on Perry); explains why a
+%       quasi-Newton preconditioner turns CG into quasi-Newton (102, Prop. 2.1).
+%   prev: 0900 HagerZhang2006a       next: 1100 Nocedal1980
+%   needs: 0200 FletcherReeves1964   unlocks: 1100 Nocedal1980
+%   file: papers/1000-Shanno_1978_Convergence_New_CG_Algorithm.pdf
+@article{Shanno1978,
+  author    = {Shanno, David F.},
+  title     = {On the Convergence of a New Conjugate Gradient Algorithm},
+  journal   = {SIAM Journal on Numerical Analysis},
+  volume    = {15},
+  number    = {6},
+  pages     = {1247--1257},
+  year      = {1978},
+  doi       = {10.1137/0715085}
+}
+
+% 1100: Limited-memory quasi-Newton. Stores the last m (s,y) pairs instead of a dense matrix;
+%       recursive update of the inverse Hessian approximation (origin of L-BFGS).
+%   prev: 1000 Shanno1978            next: 1200 LiuNocedal1989
+%   needs: 1000 Shanno1978           unlocks: 1200 LiuNocedal1989
+%   file: papers/1100-Nocedal_1980_Updating_Quasi_Newton_Matrices_Limited_Storage.pdf
+@article{Nocedal1980,
+  author    = {Nocedal, Jorge},
+  title     = {Updating Quasi-{N}ewton Matrices with Limited Storage},
+  journal   = {Mathematics of Computation},
+  volume    = {35},
+  number    = {151},
+  pages     = {773--782},
+  year      = {1980},
+  doi       = {10.1090/S0025-5718-1980-0572855-7}
+}
+
+% 1200: L-BFGS. Practical L-BFGS with scaling and convergence for convex f; Thm 7.1 (eigenvalues of
+%       L-BFGS matrices bounded away from 0 and infinity) is used directly in 102, Cor. 6.4.
+%   prev: 1100 Nocedal1980           next: 1300 GillLeonard2001
+%   needs: 1100 Nocedal1980          unlocks: 1300 GillLeonard2001, 1800 HagerZhang2013
+%   file: papers/1200-LiuNocedal_1989_Limited_Memory_BFGS_Large_Scale.pdf
+@article{LiuNocedal1989,
+  author    = {Liu, Dong C. and Nocedal, Jorge},
+  title     = {On the Limited Memory {BFGS} Method for Large Scale Optimization},
+  journal   = {Mathematical Programming},
+  volume    = {45},
+  pages     = {503--528},
+  year      = {1989},
+  doi       = {10.1007/BF01589116}
+}
+
+% 1300: Reduced-Hessian QN. Quasi-Newton restricted to the subspace spanned by past gradients;
+%       the subspace idea that 102 contrasts with.
+%   prev: 1200 LiuNocedal1989        next: 1400 GillLeonard2003
+%   needs: 1200 LiuNocedal1989       unlocks: 1400 GillLeonard2003
+%   file: papers/1300-GillLeonard_2001_Reduced_Hessian_Quasi_Newton.pdf
+@article{GillLeonard2001,
+  author    = {Gill, Philip E. and Leonard, Michael W.},
+  title     = {Reduced-{H}essian Quasi-{N}ewton Methods for Unconstrained Optimization},
+  journal   = {SIAM Journal on Optimization},
+  volume    = {12},
+  number    = {1},
+  pages     = {209--237},
+  year      = {2001},
+  doi       = {10.1137/S1052623400307950}
+}
+
+% 1400: Limited-memory reduced-Hessian. Large-scale version of 1300 with bounded subspace dimension;
+%       main competing limited-memory method in 102's introduction.
+%   prev: 1300 GillLeonard2001       next: 1500 Paige1976
+%   needs: 1300 GillLeonard2001      unlocks: 1800 HagerZhang2013
+%   file: papers/1400-GillLeonard_2003_Limited_Memory_Reduced_Hessian.pdf
+@article{GillLeonard2003,
+  author    = {Gill, Philip E. and Leonard, Michael W.},
+  title     = {Limited-Memory Reduced-{H}essian Methods for Large-Scale Unconstrained Optimization},
+  journal   = {SIAM Journal on Optimization},
+  volume    = {14},
+  number    = {2},
+  pages     = {380--401},
+  year      = {2003},
+  note      = {10.1137/S1052623497319973}
+}
+
+% 1500 (optional): Finite precision. Why Lanczos/CG lose orthogonality in floating point:
+%       loss coincides with convergence of Ritz values. Motivation for 102 (not cited there).
+%   prev: 1400 GillLeonard2003       next: 1600 HagerZhang2006b
+%   needs: 0100 HestenesStiefel1952  unlocks: 1800 HagerZhang2013 (motivation only)
+%   file: papers/1500-Paige_1976_Error_Analysis_Lanczos_Algorithm.pdf
+@article{Paige1976,
+  author    = {Paige, C. C.},
+  title     = {Error Analysis of the {L}anczos Algorithm for Tridiagonalizing a Symmetric Matrix},
+  journal   = {IMA Journal of Applied Mathematics},
+  volume    = {18},
+  number    = {3},
+  pages     = {373--381},
+  year      = {1976},
+  doi       = {10.1093/imamat/18.3.373}
+}
+
+% 1600: Survey. Unified view of FR, PRP, HS, DY, CG_DESCENT and hybrids; convergence results side by
+%       side. Source of the descent bound (2.9) in 102.
+%   prev: 1500 Paige1976             next: 1700 BarzilaiBorwein1988
+%   needs: 0800 HagerZhang2005       unlocks: 1800 HagerZhang2013
+%   file: papers/1600-HagerZhang_2006_Survey_Nonlinear_CG_Methods.pdf
+@article{HagerZhang2006b,
+  author    = {Hager, William W. and Zhang, Hongchao},
+  title     = {A Survey of Nonlinear Conjugate Gradient Methods},
+  journal   = {Pacific Journal of Optimization},
+  volume    = {2},
+  number    = {1},
+  pages     = {35--58},
+  year      = {2006}
+}
+
+% 1700: Step-size scaling. Two-point (BB) step size s^T y / y^T y, a scalar secant approximation
+%       of the inverse Hessian; gives sigma_k in 102, eq. (4.2).
+%   prev: 1600 HagerZhang2006b       next: 1800 HagerZhang2013
+%   needs: --                        unlocks: 1800 HagerZhang2013
+%   file: papers/1700-BarzilaiBorwein_1988_Two_Point_Step_Size_Gradient.pdf
+@article{BarzilaiBorwein1988,
+  author    = {Barzilai, Jonathan and Borwein, Jonathan M.},
+  title     = {Two-Point Step Size Gradient Methods},
+  journal   = {IMA Journal of Numerical Analysis},
+  volume    = {8},
+  number    = {1},
+  pages     = {141--148},
+  year      = {1988},
+  doi       = {10.1093/imanum/8.1.141}
+}
+
+% 1800 (target): L-CG_DESCENT. Uses memory to monitor loss of gradient orthogonality; when lost,
+%       solves a subspace problem (L-BFGS) and returns via a BB-scaled preconditioned step.
+%   prev: 1700 BarzilaiBorwein1988   next: --
+%   needs: 0900 HagerZhang2006a, 1200 LiuNocedal1989, 1400 GillLeonard2003,
+%          1600 HagerZhang2006b, 1700 BarzilaiBorwein1988, (1500 Paige1976)
+%   unlocks: --
+%   file: papers/1800-HagerZhang_2013_Limited_Memory_Conjugate_Gradient_Method.pdf 
+@article{HagerZhang2013,
+  author    = {Hager, William W. and Zhang, Hongchao},
+  title     = {The Limited Memory Conjugate Gradient Method},
+  journal   = {SIAM Journal on Optimization},
+  volume    = {23},
+  number    = {4},
+  pages     = {2150--2168},
+  year      = {2013},
+  publisher = {Society for Industrial and Applied Mathematics},
+  doi       = {10.1137/120898097}
+}
