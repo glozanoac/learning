@@ -1,0 +1,110 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newtheorem*{theorem}{Theorem 4:1}
+\newtheorem*{lemma}{Lemma}
+
+\title{A Formal Proof of Theorem 4:1 of Hestenes--Stiefel (1952)\\
+\large The Method of Conjugate Directions}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Setting}
+
+Let $A \in \mathbb{R}^{n\times n}$ be symmetric positive definite, $k \in \mathbb{R}^n$,
+and let $h$ be the solution of $Ah = k$. Write $(x,y) = x^{\top}y$ for the Euclidean
+inner product; since $A$ is symmetric, $(x, Ay) = (Ax, y)$ for all $x,y$.
+
+The cd-method generates $x_0, x_1, \dots$, residuals $r_i = k - Ax_i$, and
+\emph{nonzero} directions $p_0, p_1, \dots$ as follows. Given $x_0$, set
+$r_0 = k - Ax_0$ and choose $p_0 \neq 0$. Having $x_i$, $r_i$, $p_i$, compute
+\begin{align}
+a_i &= \frac{(p_i, r_i)}{(p_i, Ap_i)}, \tag{4:1a}\\
+x_{i+1} &= x_i + a_i p_i, \tag{4:1b}\\
+r_{i+1} &= r_i - a_i A p_i, \tag{4:1c}
+\end{align}
+and then choose $p_{i+1} \neq 0$ such that
+\begin{equation}
+(p_{i+1}, A p_j) = 0 \qquad (j = 0, 1, \dots, i). \tag{4:2}
+\end{equation}
+Since $p_i \neq 0$ and $A$ is positive definite, $(p_i, Ap_i) > 0$, so $a_i$ is well defined.
+Note that (4:1c) is consistent with $r_{i+1} = k - Ax_{i+1}$, because
+$k - Ax_{i+1} = k - Ax_i - a_iAp_i = r_i - a_iAp_i$ by (4:1b).
+
+\begin{theorem}
+The directions $p_0, p_1, \dots$ are mutually conjugate; the residual $r_i$ is
+orthogonal to $p_0, \dots, p_{i-1}$; and the inner product of $p_i$ with each of
+$r_0, \dots, r_i$ is the same. That is,
+\begin{align}
+(p_i, Ap_j) &= 0 \qquad (i \neq j), \tag{4:3a}\\
+(p_j, r_i) &= 0 \qquad (j = 0, 1, \dots, i-1), \tag{4:3b}\\
+(p_i, r_0) &= (p_i, r_1) = \cdots = (p_i, r_i). \tag{4:3c}
+\end{align}
+Moreover, $a_i$ may be computed as
+\begin{equation}
+a_i = \frac{(p_i, r_0)}{(p_i, Ap_i)}. \tag{4:4}
+\end{equation}
+\end{theorem}
+
+\section*{Proof}
+
+\paragraph{Proof of (4:3a).}
+Let $i \neq j$. By the symmetry of $A$, $(p_i, Ap_j) = (p_j, Ap_i)$, so we may assume
+$j < i$. Then $i \ge 1$, and (4:2) applied at step $i-1$ states that
+$(p_i, Ap_l) = 0$ for $l = 0, 1, \dots, i-1$. Since $0 \le j \le i-1$, we get
+$(p_i, Ap_j) = 0$. \hfill$\square$
+
+\begin{lemma}
+For all indices $j, k \ge 0$,
+\begin{equation}
+(p_j, r_{k+1}) = (p_j, r_k) - a_k\,(p_j, Ap_k). \tag{$\ast$}
+\end{equation}
+Consequently:
+\begin{enumerate}
+\item[\textup{(i)}] $(p_k, r_{k+1}) = 0$ for every $k$;
+\item[\textup{(ii)}] $(p_j, r_{k+1}) = (p_j, r_k)$ whenever $j \neq k$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Taking the inner product of (4:1c) with $p_j$ gives $(\ast)$ by bilinearity.
+
+(i) Put $j = k$ in $(\ast)$ and use (4:1a):
+\[
+(p_k, r_{k+1}) = (p_k, r_k) - \frac{(p_k, r_k)}{(p_k, Ap_k)}\,(p_k, Ap_k) = 0.
+\]
+
+(ii) If $j \neq k$, then $(p_j, Ap_k) = 0$ by (4:3a), already proved, so the last term of $(\ast)$ vanishes.
+\end{proof}
+
+\paragraph{Proof of (4:3b).}
+Fix $j \ge 0$. We prove by induction on $i \ge j+1$ that $(p_j, r_i) = 0$.
+
+\emph{Base case} $i = j+1$: this is part (i) of the Lemma with $k = j$.
+
+\emph{Inductive step:} suppose $(p_j, r_i) = 0$ for some $i \ge j+1$. Since
+$i \ge j+1 > j$, we have $i \neq j$, so part (ii) of the Lemma with $k = i$ gives
+\[
+(p_j, r_{i+1}) = (p_j, r_i) = 0.
+\]
+Hence $(p_j, r_i) = 0$ for all $i > j$, which is exactly (4:3b). \hfill$\square$
+
+\paragraph{Proof of (4:3c).}
+Fix $i \ge 0$. If $i = 0$ there is nothing to prove. Otherwise, for each
+$k = 0, 1, \dots, i-1$ we have $k \neq i$, so part (ii) of the Lemma (with $j = i$) gives
+\[
+(p_i, r_{k+1}) = (p_i, r_k) \qquad (k = 0, 1, \dots, i-1).
+\]
+Chaining these $i$ equalities yields
+$(p_i, r_0) = (p_i, r_1) = \cdots = (p_i, r_i)$. \hfill$\square$
+
+\paragraph{Proof of (4:4).}
+By (4:3c), $(p_i, r_i) = (p_i, r_0)$. Substituting into (4:1a) gives (4:4). \hfill$\square$
+
+\medskip
+This completes the proof of Theorem 4:1. \hfill$\blacksquare$
+
+\end{document}
