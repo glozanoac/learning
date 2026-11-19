@@ -1,0 +1,199 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Sk}{\mathcal{S}_k}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\spn}{\operatorname{span}}
+
+\title{The quantity $\dist\{g_k/\|g_k\|,\Sk\}$ in Table~1.1 of\\
+Hager \& Zhang (2013)}
+\author{Companion note \texttt{1800-02} to \texttt{1800-HagerZhang\_2013}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{What the paper says}
+
+Table~1.1~\cite[p.~2151]{HZ13} (PALMER1C, $n=8$) reports
+$\dist\{g_k,\Sk\}/\|g_k\|$, described in the text~\cite[pp.~2151--2152]{HZ13}
+as the distance between $g_k/\|g_k\|$ and the space $\Sk$ spanned by the
+previous search directions, up to 6 of them. The paper defines distance in
+its \emph{Notation} paragraph, the last paragraph of \S1~\cite[p.~2153]{HZ13}:
+\[
+\dist\{x,S\}=\inf\{\|y-x\|:\ y\in S\}.
+\]
+
+\section{Definition}
+
+\begin{definition}
+Let $m_k=\min\{k,6\}$ and
+$\Sk=\spn\{d_{k-1},\dots,d_{k-m_k}\}$, with $\mathcal S_0=\{0\}$. For $g_k\ne0$,
+\[
+\rho_k:=\dist\Bigl\{\frac{g_k}{\|g_k\|},\ \Sk\Bigr\}.
+\]
+\end{definition}
+
+\begin{lemma}[Orthogonal projector]\label{lem}
+Let $S\ne\{0\}$ be a subspace of $\R^n$, $Z$ a matrix with orthonormal columns
+($Z^{\top}Z=I$) spanning $S$, and $P=ZZ^{\top}$. For every $v\in\R^n$:
+\begin{enumerate}
+\item[(i)] $Pv\in S$, and $Pv=v$ if $v\in S$;
+\item[(ii)] $(I-P)v\perp S$;
+\item[(iii)] $\|v\|^2=\|Pv\|^2+\|(I-P)v\|^2$ and $\|Pv\|=\|Z^{\top}v\|$;
+\item[(iv)] $Pv=0\iff Z^{\top}v=0\iff v\perp S$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) $Pv=Z(Z^{\top}v)$ is a linear combination of the columns of $Z$, so
+$Pv\in S$. If $v\in S$, write $v=Zu$; then $Pv=Z(Z^{\top}Z)u=Zu=v$.
+
+(ii) Every $s\in S$ is $s=Zu$. Then
+$s^{\top}(I-P)v=u^{\top}Z^{\top}v-u^{\top}(Z^{\top}Z)Z^{\top}v
+=u^{\top}Z^{\top}v-u^{\top}Z^{\top}v=0$.
+
+(iii) $v=Pv+(I-P)v$ with $Pv\in S$ by (i) and $(I-P)v\perp S$ by (ii), so the
+two terms are orthogonal and Pythagoras gives the first identity. For the
+second, $\|Pv\|^2=v^{\top}Z(Z^{\top}Z)Z^{\top}v=v^{\top}ZZ^{\top}v=\|Z^{\top}v\|^2$.
+
+(iv) If $Pv=0$, then $\|Z^{\top}v\|=\|Pv\|=0$ by (iii). If $Z^{\top}v=0$, then
+$Pv=Z(Z^{\top}v)=0$. Finally, $Z^{\top}v=0$ says that $v$ is orthogonal to
+every column of $Z$, hence to every linear combination of them, i.e.\
+$v\perp S$; and conversely $v\perp S$ implies $v$ is orthogonal to each
+column, so $Z^{\top}v=0$.
+\end{proof}
+
+\begin{proposition}\label{prop}
+Let $Z$ have orthonormal columns spanning $\Sk$, and $P=ZZ^{\top}$
+($P=0$ if $\Sk=\{0\}$). Then
+\begin{enumerate}
+\item[(a)] $\displaystyle\rho_k=\frac{\dist\{g_k,\Sk\}}{\|g_k\|}$
+  \quad (so the table heading and the text agree);
+\item[(b)] $\displaystyle\rho_k=\frac{\|(I-P)g_k\|}{\|g_k\|}
+  =\sqrt{1-\frac{\|Z^{\top}g_k\|^2}{\|g_k\|^2}}$;
+\item[(c)] $0\le\rho_k\le1$, with $\rho_k=1\iff g_k\perp\Sk$ and
+  $\rho_k=0\iff g_k\in\Sk$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Write $g=g_k\ne0$ and $S=\Sk$.
+
+\emph{Case $S=\{0\}$.} Then $P=0$, $\dist\{g,\{0\}\}=\|g\|$ and
+$\rho_k=\bigl\|g/\|g\|\bigr\|=1$, so (a)--(c) hold directly ($g\perp\{0\}$
+and $g\notin\{0\}$). From now on $S\ne\{0\}$, so Lemma~\ref{lem} applies.
+
+\emph{(a)} Since $\|g\|>0$ and $S$ is a subspace, $s\mapsto\|g\|s$ is a
+bijection of $S$ onto $S$: every $y\in S$ is $y=\|g\|s$ for exactly one
+$s\in S$. Hence
+\[
+\dist\{g,S\}=\inf_{y\in S}\|g-y\|
+=\inf_{s\in S}\bigl\|g-\|g\|s\bigr\|
+=\|g\|\inf_{s\in S}\Bigl\|\frac{g}{\|g\|}-s\Bigr\|
+=\|g\|\,\rho_k .
+\]
+
+\emph{(b)} Fix $y\in S$ and write $g-y=(I-P)g+(Pg-y)$. The first term is
+orthogonal to $S$ (Lemma~\ref{lem}(ii)); the second lies in $S$ (Lemma~\ref{lem}(i)
+and $y\in S$). By Pythagoras,
+\[
+\|g-y\|^2=\|(I-P)g\|^2+\|Pg-y\|^2\ \ge\ \|(I-P)g\|^2 ,
+\]
+with equality for $y=Pg\in S$. So $\dist\{g,S\}=\|(I-P)g\|$, and (a) gives
+$\rho_k=\|(I-P)g\|/\|g\|$. Dividing Lemma~\ref{lem}(iii) by $\|g\|^2$ gives
+$1=\|Z^{\top}g\|^2/\|g\|^2+\rho_k^2$; since $\rho_k\ge0$, this is the second
+formula.
+
+\emph{(c)} By (b) and Lemma~\ref{lem}(iii),
+$\rho_k^2=1-\|Pg\|^2/\|g\|^2$ with $0\le\|Pg\|^2\le\|g\|^2$, so
+$0\le\rho_k\le1$. Moreover
+\begin{itemize}
+\item $\rho_k=1\iff Pg=0\iff g\perp S$, by Lemma~\ref{lem}(iv);
+\item $\rho_k=0\iff (I-P)g=0\iff g=Pg$. If $g=Pg$ then $g\in S$ by
+  Lemma~\ref{lem}(i); if $g\in S$ then $Pg=g$, also by Lemma~\ref{lem}(i).
+\qedhere
+\end{itemize}
+\end{proof}
+
+In exact CG on a quadratic, $g_k\perp d_j$ for all $j<k$
+\cite[pp.~2159--2160]{HZ13}, so $\rho_k=1$ always. Any value below $1$ in
+Table~1.1 is therefore lost orthogonality. The paper's test (3.2) is simply
+$\rho_k\le\eta_0$.
+
+\section{Two examples}
+
+Take $n=3$, $A=\operatorname{diag}(1,2,3)$, $g_0=(1,1,1)^{\top}$, and the
+Fletcher--Reeves code of \S1 of the paper. Here $k\le3<6$, so
+$\Sk=\spn\{d_0,\dots,d_{k-1}\}$.
+
+\subsection*{Example 1: exact CG (orthogonality kept)}
+
+\begin{center}
+\begin{tabular}{@{}cll@{}}
+\toprule
+$k$ & $g_k^{\top}$ & $d_k^{\top}$\\
+\midrule
+0 & $(1,\,1,\,1)$ & $(-1,\,-1,\,-1)$\\
+1 & $(\tfrac12,\,0,\,-\tfrac12)$ & $(-\tfrac23,\,-\tfrac16,\,\tfrac13)$\\
+2 & $(\tfrac1{10},\,-\tfrac15,\,\tfrac1{10})$ & $(-\tfrac9{50},\,\tfrac9{50},\,-\tfrac3{50})$\\
+3 & $(0,\,0,\,0)$ & \\
+\bottomrule
+\end{tabular}
+\end{center}
+$g_1^{\top}d_0=0$, so $\rho_1=1$. Also $g_2^{\top}d_0=g_2^{\top}d_1=0$, so
+$\rho_2=1$. At $k=3$, $g_3=0$: the minimum is reached in $n$ steps.
+
+\subsection*{Example 2: one wrong step (orthogonality lost)}
+
+Same problem, but the first step length is $\tfrac35$ instead of $\tfrac12$
+(standing in for a rounding error). Then
+\[
+g_1=(\tfrac25,\,-\tfrac15,\,-\tfrac45)^{\top},\qquad
+\mathcal S_1=\spn\{(1,1,1)^{\top}\}.
+\]
+Projecting, $Pg_1=-\tfrac15(1,1,1)^{\top}$ and
+$(I-P)g_1=(\tfrac35,0,-\tfrac35)^{\top}$, so by Proposition~\ref{prop}(b)
+\[
+\rho_1=\frac{3\sqrt2/5}{\sqrt{21}/5}=\sqrt{\tfrac67}\approx0.926 .
+\]
+Continuing the same way gives $\rho_2=\sqrt{13125/18271}\approx0.848$, and
+$g_3\ne0$: the method no longer finishes in $n$ steps.
+
+\begin{center}
+\begin{tabular}{@{}ccc@{}}
+\toprule
+$k$ & $\rho_k$ (exact) & $\rho_k$ (wrong step)\\
+\midrule
+0 & 1 & 1\\
+1 & 1 & 0.926\\
+2 & 1 & 0.848\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Reading Table~1.1}
+
+\begin{itemize}
+\item L-BFGS never drops below $0.64$: orthogonality is essentially kept.
+\item CG at $k=5$: $\rho_5\approx3\times10^{-9}$, so $g_5$ essentially lies
+  in $\spn\{d_0,\dots,d_4\}$.
+\item For $k>6$ only the last 6 directions are kept, which is why CG can jump
+  back near $1$ (e.g.\ $k=9$).
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{HZ13} W.~W.~Hager and H.~Zhang, The limited memory conjugate gradient
+method, \emph{SIAM J. Optim.}, 23 (2013), pp.~2150--2168.
+\end{thebibliography}
+
+\end{document}
