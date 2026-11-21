@@ -1,0 +1,153 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+
+\newcommand{\R}{\mathbb{R}}
+
+\title{Exact line search step for a quadratic}
+\author{Companion note \texttt{1800-03} to \texttt{1800-HagerZhang\_2013}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{What the paper uses}
+
+For the quadratic $\tfrac12x^{\top}Ax-b^{\top}x$, the Fletcher--Reeves code of
+the paper takes the step $\alpha_k=\|g_k\|^2/d_k^{\top}Ad_k$, and Table~1.1 is
+computed ``with an exact line search''~\cite[pp.~2150--2152]{HZ13}. This note
+proves that these are the same thing, and gives the step used for PALMER1C.
+
+\section{Setting}
+
+Let
+\[
+f(x)=\tfrac12x^{\top}Hx-c^{\top}x+\gamma,\qquad x\in\R^n,
+\]
+with $H\in\R^{n\times n}$ symmetric positive definite, $c\in\R^n$, $\gamma\in\R$.
+Its gradient is $g(x)=Hx-c$. For a point $x$ and a direction $d\ne0$, the
+\emph{exact line search} step is the minimizer of $\varphi(\alpha):=f(x+\alpha d)$
+over $\alpha\in\R$.
+
+\section{Result}
+
+\begin{lemma}[$f$ along a line]\label{lem}
+For all $x,d\in\R^n$ and $\alpha\in\R$,
+\[
+\varphi(\alpha)=f(x)+\alpha\,g(x)^{\top}d+\tfrac12\alpha^2\,d^{\top}Hd .
+\]
+\end{lemma}
+
+\begin{proof}
+Expand the quadratic term:
+\[
+\tfrac12(x+\alpha d)^{\top}H(x+\alpha d)
+=\tfrac12x^{\top}Hx+\tfrac12\alpha\,(x^{\top}Hd+d^{\top}Hx)+\tfrac12\alpha^2d^{\top}Hd
+=\tfrac12x^{\top}Hx+\alpha\,x^{\top}Hd+\tfrac12\alpha^2d^{\top}Hd,
+\]
+because $d^{\top}Hx=(d^{\top}Hx)^{\top}=x^{\top}H^{\top}d=x^{\top}Hd$ ($H$
+symmetric). The linear term gives $-c^{\top}(x+\alpha d)=-c^{\top}x-\alpha\,c^{\top}d$.
+Adding these and $\gamma$,
+\[
+\varphi(\alpha)=f(x)+\alpha\,(x^{\top}H-c^{\top})d+\tfrac12\alpha^2d^{\top}Hd .
+\]
+Finally $(x^{\top}H-c^{\top})d=(Hx-c)^{\top}d=g(x)^{\top}d$, again by symmetry of $H$.
+\end{proof}
+
+\begin{proposition}[Exact step]\label{prop}
+Let $d\ne0$, and write $p:=g(x)^{\top}d$, $q:=d^{\top}Hd$. Then $q>0$, and
+$\varphi$ has the unique minimizer
+\[
+\alpha^\ast=-\frac{g(x)^{\top}d}{d^{\top}Hd}.
+\]
+Moreover $g(x+\alpha^\ast d)^{\top}d=0$, and $\alpha^\ast>0$ whenever $d$ is a
+descent direction ($p<0$).
+\end{proposition}
+
+\begin{proof}
+\emph{$q>0$:} $H$ is positive definite and $d\ne0$.
+
+\emph{Minimizer.} By Lemma~\ref{lem}, $\varphi(\alpha)=f(x)+p\alpha+\tfrac12q\alpha^2$.
+Completing the square with $\alpha^\ast=-p/q$:
+\[
+\tfrac12q(\alpha-\alpha^\ast)^2-\frac{p^2}{2q}
+=\tfrac12q\alpha^2-q\alpha^\ast\alpha+\tfrac12q(\alpha^\ast)^2-\frac{p^2}{2q}
+=\tfrac12q\alpha^2+p\alpha+\frac{p^2}{2q}-\frac{p^2}{2q}
+=p\alpha+\tfrac12q\alpha^2 .
+\]
+Hence
+\[
+\varphi(\alpha)=\varphi(\alpha^\ast)+\tfrac12q(\alpha-\alpha^\ast)^2,\qquad
+\varphi(\alpha^\ast)=f(x)-\frac{p^2}{2q}.
+\]
+Since $q>0$, $\varphi(\alpha)\ge\varphi(\alpha^\ast)$, with equality if and only
+if $\alpha=\alpha^\ast$.
+
+\emph{Orthogonality.} $g(x+\alpha^\ast d)=Hx-c+\alpha^\ast Hd=g(x)+\alpha^\ast Hd$, so
+$g(x+\alpha^\ast d)^{\top}d=p+\alpha^\ast q=p-p=0$.
+
+\emph{Sign.} If $p<0$ then $\alpha^\ast=-p/q>0$, since $q>0$.
+\end{proof}
+
+\section{The two cases used}
+
+\begin{corollary}[PALMER1C]\label{cor:palmer}
+Let $f(a)=\|Va-y\|^2$ with $V$ of full column rank, $A=V^{\top}V$, $b=V^{\top}y$.
+Then $g(a)=2(Aa-b)$ and the exact step is
+\[
+\alpha^\ast=-\frac{g(a)^{\top}d}{2\,d^{\top}Ad}.
+\]
+\end{corollary}
+
+\begin{proof}
+$f(a)=(Va-y)^{\top}(Va-y)=a^{\top}V^{\top}Va-2y^{\top}Va+y^{\top}y
+=\tfrac12a^{\top}(2A)a-(2b)^{\top}a+y^{\top}y$, using $a^{\top}V^{\top}y=y^{\top}Va$.
+This is the setting with $H=2A$, $c=2b$, $\gamma=y^{\top}y$, so $g(a)=2(Aa-b)$.
+$H$ is positive definite: for $v\ne0$, $v^{\top}(2A)v=2\|Vv\|^2>0$ because
+$V$ has full column rank. Proposition~\ref{prop} with $d^{\top}Hd=2\,d^{\top}Ad$
+gives the formula.
+\end{proof}
+
+For PALMER1C, $V_{ik}=x_i^{2k}$ ($k=0,\dots,7$) is a Vandermonde matrix in
+$t_i=x_i^2$; it has full column rank because the 35 data points give 18 distinct
+values of $t_i$ (at least 8 are needed).
+
+\begin{corollary}[The paper's step]\label{cor:paper}
+Let $f(x)=\tfrac12x^{\top}Ax-b^{\top}x$ with $A$ symmetric positive definite,
+and run the Fletcher--Reeves code~\cite[p.~2152]{HZ13} with exact steps:
+$d_0=-g_0$, $d_{k+1}=-g_{k+1}+\beta_kd_k$, and $\alpha_k$ the minimizer of
+$f(x_k+\alpha d_k)$. Then for every $k$ with $g_k\ne0$,
+\[
+g_k^{\top}d_k=-\|g_k\|^2\qquad\text{and}\qquad
+\alpha_k=\frac{\|g_k\|^2}{d_k^{\top}Ad_k},
+\]
+which is the step in the code.
+\end{corollary}
+
+\begin{proof}
+Here $H=A$. \emph{First identity, by induction on $k$.} For $k=0$,
+$g_0^{\top}d_0=-\|g_0\|^2$. For $k\ge0$, $\alpha_k$ is the exact step along
+$d_k$, so $g_{k+1}^{\top}d_k=0$ by Proposition~\ref{prop}. Then
+$g_{k+1}^{\top}d_{k+1}=-\|g_{k+1}\|^2+\beta_k\,g_{k+1}^{\top}d_k=-\|g_{k+1}\|^2$.
+
+\emph{Step.} $g_k\ne0$ gives $d_k\ne0$ (as $g_k^{\top}d_k=-\|g_k\|^2\ne0$), so
+Proposition~\ref{prop} applies:
+$\alpha_k=-g_k^{\top}d_k/(d_k^{\top}Ad_k)=\|g_k\|^2/(d_k^{\top}Ad_k)$.
+\end{proof}
+
+The identity $g_k^{\top}d_k=-\|g_k\|^2$ relies on all previous steps being
+exact. If one step is not exact (as in Example~2 of note \texttt{1800-02}),
+the formula $\|g_k\|^2/d_k^{\top}Ad_k$ is no longer the exact step, while
+$-g_k^{\top}d_k/d_k^{\top}Ad_k$ still is.
+
+\begin{thebibliography}{9}
+\bibitem{HZ13} W.~W.~Hager and H.~Zhang, The limited memory conjugate gradient
+method, \emph{SIAM J. Optim.}, 23 (2013), pp.~2150--2168.
+\end{thebibliography}
+
+\end{document}

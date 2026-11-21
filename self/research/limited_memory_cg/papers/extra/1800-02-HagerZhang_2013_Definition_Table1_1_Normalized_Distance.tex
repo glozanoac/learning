@@ -133,41 +133,99 @@ $\rho_k\le\eta_0$.
 \section{Two examples}
 
 Take $n=3$, $A=\operatorname{diag}(1,2,3)$, $g_0=(1,1,1)^{\top}$, and the
-Fletcher--Reeves code of \S1 of the paper. Here $k\le3<6$, so
-$\Sk=\spn\{d_0,\dots,d_{k-1}\}$.
+Fletcher--Reeves code of \S1 of the paper~\cite[p.~2152]{HZ13}:
+\[
+d_0=-g_0,\quad \alpha_k=\frac{\|g_k\|^2}{d_k^{\top}Ad_k},\quad
+g_{k+1}=g_k+\alpha_kAd_k,\quad
+\beta_k=\frac{\|g_{k+1}\|^2}{\|g_k\|^2},\quad
+d_{k+1}=-g_{k+1}+\beta_kd_k .
+\]
+Here $k\le3<6$, so $\Sk=\spn\{d_0,\dots,d_{k-1}\}$.
 
 \subsection*{Example 1: exact CG (orthogonality kept)}
 
-\begin{center}
-\begin{tabular}{@{}cll@{}}
-\toprule
-$k$ & $g_k^{\top}$ & $d_k^{\top}$\\
-\midrule
-0 & $(1,\,1,\,1)$ & $(-1,\,-1,\,-1)$\\
-1 & $(\tfrac12,\,0,\,-\tfrac12)$ & $(-\tfrac23,\,-\tfrac16,\,\tfrac13)$\\
-2 & $(\tfrac1{10},\,-\tfrac15,\,\tfrac1{10})$ & $(-\tfrac9{50},\,\tfrac9{50},\,-\tfrac3{50})$\\
-3 & $(0,\,0,\,0)$ & \\
-\bottomrule
-\end{tabular}
-\end{center}
-$g_1^{\top}d_0=0$, so $\rho_1=1$. Also $g_2^{\top}d_0=g_2^{\top}d_1=0$, so
-$\rho_2=1$. At $k=3$, $g_3=0$: the minimum is reached in $n$ steps.
+\emph{Step $k=0$.} $Ad_0=(-1,-2,-3)^{\top}$, $d_0^{\top}Ad_0=1+2+3=6$,
+$\|g_0\|^2=3$, so $\alpha_0=\tfrac36=\tfrac12$ and
+\begin{align*}
+g_1&=(1,1,1)+\tfrac12(-1,-2,-3)=(\tfrac12,\,0,\,-\tfrac12),
+  \qquad \|g_1\|^2=\tfrac12,\qquad \beta_0=\tfrac{1/2}{3}=\tfrac16,\\
+d_1&=-(\tfrac12,0,-\tfrac12)+\tfrac16(-1,-1,-1)=(-\tfrac23,\,-\tfrac16,\,\tfrac13).
+\end{align*}
+
+\emph{Step $k=1$.} $Ad_1=(-\tfrac23,-\tfrac13,1)^{\top}$,
+$d_1^{\top}Ad_1=\tfrac49+\tfrac1{18}+\tfrac13=\tfrac56$, so
+$\alpha_1=\tfrac{1/2}{5/6}=\tfrac35$ and
+\begin{align*}
+g_2&=(\tfrac12,0,-\tfrac12)+\tfrac35(-\tfrac23,-\tfrac13,1)
+   =(\tfrac1{10},\,-\tfrac15,\,\tfrac1{10}),
+  \qquad \|g_2\|^2=\tfrac3{50},\qquad \beta_1=\tfrac{3/50}{1/2}=\tfrac3{25},\\
+d_2&=-(\tfrac1{10},-\tfrac15,\tfrac1{10})+\tfrac3{25}(-\tfrac23,-\tfrac16,\tfrac13)
+   =(-\tfrac9{50},\,\tfrac9{50},\,-\tfrac3{50}).
+\end{align*}
+
+\emph{Step $k=2$.} $Ad_2=(-\tfrac9{50},\tfrac9{25},-\tfrac9{50})^{\top}$,
+$d_2^{\top}Ad_2=\tfrac{81+162+27}{2500}=\tfrac{27}{250}$, so
+$\alpha_2=\tfrac{3/50}{27/250}=\tfrac59$ and
+\[
+g_3=(\tfrac1{10},-\tfrac15,\tfrac1{10})+\tfrac59(-\tfrac9{50},\tfrac9{25},-\tfrac9{50})
+=(0,\,0,\,0).
+\]
+
+\emph{Values of $\rho_k$.} $g_1^{\top}d_0=-(\tfrac12+0-\tfrac12)=0$, so
+$g_1\perp\mathcal S_1$ and $\rho_1=1$ (Proposition~\ref{prop}(c)).
+$g_2^{\top}d_0=-(\tfrac1{10}-\tfrac15+\tfrac1{10})=0$ and
+$g_2^{\top}d_1=-\tfrac1{15}+\tfrac1{30}+\tfrac1{30}=0$, so $\rho_2=1$.
+At $k=3$, $g_3=0$: the minimum is reached in $n$ steps.
 
 \subsection*{Example 2: one wrong step (orthogonality lost)}
 
-Same problem, but the first step length is $\tfrac35$ instead of $\tfrac12$
-(standing in for a rounding error). Then
+Same problem, but the first step length is $\tilde\alpha_0=\tfrac35$ instead
+of $\tfrac12$ (standing in for a rounding error). All later steps follow the
+code exactly.
+
+\emph{Step $k=0$.} With $Ad_0=(-1,-2,-3)^{\top}$ as before,
+\begin{align*}
+g_1&=(1,1,1)+\tfrac35(-1,-2,-3)=(\tfrac25,\,-\tfrac15,\,-\tfrac45),
+  \qquad \|g_1\|^2=\tfrac{21}{25},\qquad \beta_0=\tfrac{21/25}{3}=\tfrac7{25},\\
+d_1&=-(\tfrac25,-\tfrac15,-\tfrac45)+\tfrac7{25}(-1,-1,-1)
+   =(-\tfrac{17}{25},\,-\tfrac2{25},\,\tfrac{13}{25}).
+\end{align*}
+
+\emph{Step $k=1$.} $Ad_1=(-\tfrac{17}{25},-\tfrac4{25},\tfrac{39}{25})^{\top}$,
+$d_1^{\top}Ad_1=\tfrac{289+8+507}{625}=\tfrac{804}{625}$, so
+$\alpha_1=\tfrac{21/25}{804/625}=\tfrac{175}{268}$ and
 \[
-g_1=(\tfrac25,\,-\tfrac15,\,-\tfrac45)^{\top},\qquad
-\mathcal S_1=\spn\{(1,1,1)^{\top}\}.
+g_2=\bigl(\tfrac25-\tfrac{119}{268},\ -\tfrac15-\tfrac{28}{268},\
+-\tfrac45+\tfrac{273}{268}\bigr)
+=\tfrac1{1340}(-59,\,-408,\,293).
 \]
-Projecting, $Pg_1=-\tfrac15(1,1,1)^{\top}$ and
+
+\emph{Step $k=2$.} The fractions become large; numerically,
+$g_3\approx(-0.0891,\ 0.0632,\ -0.0287)\ne0$: the method no longer finishes
+in $n$ steps.
+
+\emph{Value of $\rho_1$.} $\mathcal S_1=\spn\{(1,1,1)^{\top}\}$, with
+$Z=\tfrac1{\sqrt3}(1,1,1)^{\top}$. Then $Pg_1=-\tfrac15(1,1,1)^{\top}$ and
 $(I-P)g_1=(\tfrac35,0,-\tfrac35)^{\top}$, so by Proposition~\ref{prop}(b)
 \[
 \rho_1=\frac{3\sqrt2/5}{\sqrt{21}/5}=\sqrt{\tfrac67}\approx0.926 .
 \]
-Continuing the same way gives $\rho_2=\sqrt{13125/18271}\approx0.848$, and
-$g_3\ne0$: the method no longer finishes in $n$ steps.
+
+\emph{Value of $\rho_2$.} $\rho_2$ depends only on the direction of $g_2$ and
+on $\mathcal S_2$, so we may use $g=(-59,-408,293)^{\top}$ and the spanning
+vectors $(1,1,1)^{\top}\propto d_0$, $(17,2,-13)^{\top}\propto d_1$.
+Gram--Schmidt gives the orthonormal basis
+\[
+z_1=\tfrac1{\sqrt3}(1,1,1)^{\top},\qquad
+(17,2,-13)-\tfrac{17+2-13}{3}(1,1,1)=(15,0,-15)
+\ \Rightarrow\ z_2=\tfrac1{\sqrt2}(1,0,-1)^{\top}.
+\]
+Then $z_1^{\top}g=-\tfrac{174}{\sqrt3}$, $z_2^{\top}g=-\tfrac{352}{\sqrt2}$,
+$\|Z^{\top}g\|^2=10092+61952=72044$ and $\|g\|^2=255794$. By
+Proposition~\ref{prop}(b),
+\[
+\rho_2=\sqrt{1-\tfrac{72044}{255794}}=\sqrt{\tfrac{13125}{18271}}\approx0.848 .
+\]
 
 \begin{center}
 \begin{tabular}{@{}ccc@{}}
@@ -180,7 +238,6 @@ $k$ & $\rho_k$ (exact) & $\rho_k$ (wrong step)\\
 \bottomrule
 \end{tabular}
 \end{center}
-
 \section{Reading Table~1.1}
 
 \begin{itemize}
