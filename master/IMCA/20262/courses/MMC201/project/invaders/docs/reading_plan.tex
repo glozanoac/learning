@@ -1,0 +1,280 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=green!40!black,urlcolor=blue!60!black]{hyperref}
+\usepackage{doi}
+
+\setlist{itemsep=2pt,topsep=3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+% ---- conventions ---------------------------------------------------------
+\newcommand{\zhao}[1]{[Zhao~#1]}                 % book section / equation
+\newcommand{\src}[2]{\texttt{\detokenize{#1}}\,:\,#2}      % file : line
+\newcommand{\srcf}[1]{\texttt{\detokenize{#1}}}            % file or symbol
+\newcommand{\report}[1]{\emph{Report~#1}}                  % course report section
+\newcommand{\cmd}[1]{\par\smallskip{\small\texttt{\detokenize{#1}}}\par\smallskip}
+\newenvironment{phase}[2]{\section{#1}\textit{Time: #2.}\par}{}
+\newcommand{\blk}[1]{\par\smallskip\textbf{#1}\par}
+
+\title{\textbf{A2C in depth}\\[2pt]\large A reading plan linked to the Mini Invaders source code}
+\author{MMC201 -- Teor\'ia y Modelos de Machine Learning}
+\date{November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This plan leads from the definition of a Markov decision process to the
+advantage actor-critic (A2C) used in the Mini Invaders project. The main text is
+Zhao's \emph{Mathematical Foundations of Reinforcement Learning}~\citep{zhao2025}; papers
+fill the gaps between the book's algorithms and a working implementation. For every
+idea the plan gives the place in the code that implements it, a pointer to the
+proof in the course report, and an experiment that makes it visible. Six phases,
+about three weeks part time.
+\end{abstract}
+
+\section*{How to use this plan}
+\begin{itemize}
+\item \zhao{10.2, (10.7)} means Section 10.2, equation (10.7) of \citet{zhao2025}.
+      The source code carries the same tags in its comments, so \texttt{grep "Zhao 10.2"} finds them.
+\item \src{train_a2c.py}{158} means file \srcf{train_a2c.py}, line 158, in the code bundle.
+      The environment is the package \srcf{mini_invaders/}, one file per component
+      (Table~\ref{tab:package}).
+\item \report{\S4.2} refers to the course report \emph{Mini Invaders: an A2C agent in a
+      non-stationary game}, where the results used here are proved.
+\item Every experiment writes to its own folder (\texttt{--out \dots}), so the trained
+      agent in \srcf{out/} is never overwritten. Run commands from the \srcf{invaders/} folder.
+\end{itemize}
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}Xl@{}}
+\toprule
+File in \srcf{mini_invaders/} & What it contains & MDP element \\
+\midrule
+\srcf{config.py}     & every constant: grid, maps, alien kinds, rewards, ammunition, actions & $\mathcal A$, $r$ \zhao{1.2, 1.5}\\
+\srcf{env.py}        & class \srcf{Invaders}: state, \srcf{reset()}, \srcf{step()} as six sub-steps & $s$, $p(s'|s,a)$ \zhao{1.3}\\
+\srcf{arena.py}      & ship zone and bunkers (sub-step 1) & part of $s$\\
+\srcf{weapons.py}    & ammunition, shared launcher, grenade blast, damage-based reward (1--2) & $r$ \zhao{1.5}\\
+\srcf{aliens.py}     & waves, kinds, movement, kamikazes, shields, teleports (3) & $p(s'|s,a)$\\
+\srcf{alien_fire.py} & alien fire and the hidden phase $\xi$: the non-stationary part (4--5) & $p_\xi(s'|s,a)$\\
+\srcf{bonuses.py}    & bonuses released by the game (6) & $p(s'|s,a)$, $r$\\
+\srcf{features.py}   & the observation $\phi(s)\in\mathbb R^{311}$, blocks A--M & $\phi(s)$ \zhao{8.2.3}\\
+\srcf{scripted.py}   & Greedy and Cautious baselines & --\\
+\srcf{render.py}     & drawing only & --\\
+\bottomrule
+\end{tabularx}
+\caption{The environment package, in reading order. \srcf{invaders_env.py} re-exports it, so older scripts still run.}
+\label{tab:package}
+\end{table}
+
+\section*{Map: book $\to$ code}
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
+\toprule
+Concept & Zhao & Code \\
+\midrule
+MDP: state, action, transition, reward, episode & 1.2--1.7, (1.4) & \src{mini_invaders/env.py}{1} (header), \srcf{Invaders.step} \src{env.py}{79}\\
+Discounted return, $\gamma$ & 1.6, (1.3) & \srcf{A2C.__init__} \src{train_a2c.py}{119}\\
+Bellman equation; $v$ from $q$ & 2.4 (2.7), 2.8 (2.13)--(2.14) & \srcf{QAC.value} \src{train_a2c.py}{227}\\
+Robbins--Monro, SGD, mini-batch & 6.2 Thm 6.1; 6.4 (6.13), 6.4.4, Thm 6.4 & \srcf{Adam} \src{train_a2c.py}{85}; \srcf{train} \src{train_a2c.py}{352}\\
+TD; Sarsa; $n$-step Sarsa & 7.1 (7.1); 7.2 (7.12); 7.3 & $n$-step targets \src{train_a2c.py}{401}\\
+Value approximation; objective; TD-FA & 8.1; 8.2.1 (8.3); (8.13), Alg.~8.1; 8.2.3 & \srcf{MLP} \src{train_a2c.py}{58}; critic step \src{train_a2c.py}{175}; $\phi(s)$ \src{features.py}{30}\\
+Sarsa with function approximation & 8.3.1 (8.35) & \srcf{QAC.update} \src{train_a2c.py}{236}; \srcf{QAC.bootstrap} \src{train_a2c.py}{231}\\
+Softmax policy & 9.1 (9.12) & \srcf{A2C.pi} \src{train_a2c.py}{134}\\
+Metrics $\bar v_\pi$, $\bar r_\pi$ & 9.2 & objective of \report{\S4.1}\\
+Policy gradient theorem & 9.3 Thm 9.1 (9.8)--(9.11), Thm 9.2 & actor step \src{train_a2c.py}{180}\\
+REINFORCE & 9.4 Alg.~9.1, (9.32) & \texttt{--nstep} large ($n=\infty$ is Monte Carlo)\\
+QAC & 10.1 Alg.~10.1, (10.2) & \srcf{QAC} \src{train_a2c.py}{205}, \texttt{--algo qac}\\
+Baseline invariance; optimal baseline & 10.2.1 (10.3)--(10.5), Box 10.1 & docstring of \srcf{A2C.update} \src{train_a2c.py}{158}\\
+A2C (TD actor-critic) & 10.2.2 (10.7)--(10.8), Alg.~10.2 & \srcf{A2C.update} \src{train_a2c.py}{158}; \texttt{--nstep 1 --envs 1 --entropy 0}\\
+Entropy, Adam, clipping, parallel envs & not in Zhao & \srcf{A2C.update}; \srcf{Adam.step}; \citet{mnih2016,kingma2015,pascanu2013}\\
+\bottomrule
+\end{tabularx}
+\caption{Where each idea of the book lives in the code. Unqualified file names \srcf{env.py}, \srcf{features.py}, \dots{} are in \srcf{mini_invaders/}.}
+\end{table}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}clll@{}}
+\toprule
+Phase & Topic & Zhao & Days\\
+\midrule
+0 & The decision problem          & Ch.~1--2 & 2\\
+1 & Stochastic approximation      & Ch.~6    & 3\\
+2 & TD learning, $n$-step targets & Ch.~7    & 3\\
+3 & Value approximation: the critic & Ch.~8  & 3\\
+4 & Policy gradient: the actor    & Ch.~9    & 4\\
+5 & Actor-critic: QAC $\to$ A2C   & Ch.~10   & 4\\
+6 & What makes A2C work in practice & papers & 3\\
+-- & Optional: non-stationarity, partial observability & papers & --\\
+\bottomrule
+\end{tabular}
+\caption{Schedule.}
+\end{table}
+
+\clearpage
+% ===========================================================================
+\begin{phase}{Phase 0 -- The decision problem}{2 days}
+\blk{Read}
+\begin{itemize}
+\item \zhao{Ch.~1}, all. Focus on 1.3 (transitions as probabilities), 1.6 (returns, why $\gamma<1$) and 1.7 (Markov property (1.4)).
+\item \zhao{Ch.~2}: 2.3--2.4 (state value, Bellman equation (2.7)), 2.6 (matrix form (2.10)), 2.8 (action value, (2.13)--(2.14)).
+\item \citet{kaelbling1998}, \S1--3 only: why a policy that sees only $\phi(s)$ acts in a POMDP.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item \src{mini_invaders/env.py}{1}: the header places every MDP element of Ch.~1 in the code.
+\item \srcf{Invaders.step}, \src{env.py}{79}: $p(s'|s,a)$ is the composition of six numbered sub-steps, each calling one component module. All randomness comes from \srcf{self.rng}.
+\item Reward: constants \src{config.py}{61} and \srcf{_damage_alien}, \src{weapons.py}{127}.
+\item Termination, \src{env.py}{117}: the only absorbing event is \texttt{lives == 0}; there is no time limit.
+\end{itemize}
+\blk{Report} \S2 (formulation, finite state space), \S3 (reward propositions), remark on partial observability.
+\blk{Check yourself} Why is \srcf{vx}, the ship's last move, part of the state? \emph{Hint:} the smart aliens read it in \srcf{_smart_fire}, \src{alien_fire.py}{88}. Without it the process would not be Markov.
+\end{phase}
+
+% ===========================================================================
+\begin{phase}{Phase 1 -- Stochastic approximation: the engine of every update}{3 days}
+\blk{Read}
+\begin{itemize}
+\item \zhao{Ch.~6}: 6.2 (Robbins--Monro, Thm 6.1), 6.4 (SGD (6.13), convergence pattern 6.4.2, mini-batch 6.4.4, Thm 6.4).
+\item \citet{robbins1951}: the original idea, in a few pages.
+\item \citet{kingma2015}, \S2 (algorithm) and \S3 (bias correction).
+\item \citet{kushner2003}: the chapters on constant step sizes and tracking; this is why the code keeps the steps constant. \citet{benveniste1990} is an alternative.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item \srcf{Adam}, \src{train_a2c.py}{85}: the docstring explains why the constant step deliberately breaks the conditions of Thm 6.1 and 6.4.
+\item \srcf{train}, \src{train_a2c.py}{352}: $16\times 8=128$ samples are averaged into one step, the mini-batch gradient of 6.4.4.
+\end{itemize}
+\blk{Report} \S4.8 (Adam, bias-correction lemma), \S4.9 (tracking proposition: bias $O(D/\eta)$, variance $O(\eta\sigma^2)$).
+\blk{Experiment E1 (mini-batch size)}
+\cmd{python train_a2c.py --updates 3000 --envs 1  --out out_e1_envs1}
+\cmd{python train_a2c.py --updates 3000 --envs 16 --out out_e1_envs16}
+Compare \srcf{curves.png}: the single-sample run (Zhao's setting) is much noisier per update.
+\end{phase}
+
+% ===========================================================================
+\begin{phase}{Phase 2 -- TD learning and $n$-step targets}{3 days}
+\blk{Read}
+\begin{itemize}
+\item \zhao{Ch.~7}: 7.1 (TD (7.1), Thm 7.1 and its proof through Thm 6.3), 7.2 (Sarsa (7.12)), \textbf{7.3 ($n$-step Sarsa)}, 7.5 (unified view).
+\item \citet[Ch.~7]{sutton2018}: $n$-step bootstrapping, a second angle.
+\item \citet{schulman2016}, \S2--3: GAE mixes the $n$-step advantages of this code exponentially over $n$.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item $n$-step targets, \src{train_a2c.py}{401}: $G_t=r_{t+1}+\gamma G_{t+1}$, bootstrapped with $v(s_{t+n})$ and cut at a terminal state.
+\item \srcf{A2C.bootstrap} \src{train_a2c.py}{154} returns $v(s_{t+n})$; \srcf{QAC.bootstrap} \src{train_a2c.py}{231} returns $q(s_{t+n},a_{t+n})$, as in $n$-step Sarsa.
+\end{itemize}
+\blk{Report} \S4.4, bias of the $n$-step target: $|\text{bias}|\le\gamma^n\varepsilon$. Inside each segment the code uses $n_j=8-j$.
+\blk{Experiment E2 (bias against variance)}
+\cmd{python train_a2c.py --updates 5000 --nstep 1  --out out_e2_n1}
+\cmd{python train_a2c.py --updates 5000 --nstep 8  --out out_e2_n8}
+\cmd{python train_a2c.py --updates 5000 --nstep 32 --out out_e2_n32}
+$n=1$ is the TD error of Alg.~10.2; a large $n$ approaches the Monte Carlo return of REINFORCE.
+\end{phase}
+
+% ===========================================================================
+\begin{phase}{Phase 3 -- Value function approximation: the critic}{3 days}
+\blk{Read}
+\begin{itemize}
+\item \zhao{Ch.~8}: 8.1; 8.2.1 (objective (8.3) and its state distribution); 8.2.2 (from (8.12) to the TD rule \textbf{(8.13)}, Alg.~8.1); 8.2.3 (linear $\phi(s)^\top w$ against neural networks); 8.2.5 (analysis); 8.3.1 (Sarsa with approximation \textbf{(8.35)}).
+\item \citet{tsitsiklis1997}: convergence of linear TD, and why the TD target gives only a \emph{semi}-gradient.
+\item \citet[\S9.3, \S11.3]{sutton2018}: semi-gradient methods, and the deadly triad that on-policy A2C avoids.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item Critic step, \src{train_a2c.py}{175}: \texttt{adv = G - v} and a step on $\tfrac12(G-v)^2$ with $G$ held fixed, i.e.\ (8.13) in batch form.
+\item \srcf{QAC.update}, \src{train_a2c.py}{236}: the critic is $q(s,\cdot\,;w)$ and only the chosen action's output gets a gradient, i.e.\ (8.35).
+\item \srcf{MLP} \src{train_a2c.py}{58} and \srcf{features} \src{features.py}{30}: the network and the feature vector of 8.2.3. \srcf{features.BLOCKS} lists the 16 blocks of $\phi(s)$.
+\end{itemize}
+\blk{Report} \S4.6 (the A2C estimators; why ``semi''), \S4.7 (back-propagation), appendix ``Feature map''.
+\end{phase}
+
+% ===========================================================================
+\begin{phase}{Phase 4 -- Policy gradient: the actor}{4 days}
+\blk{Read}
+\begin{itemize}
+\item \zhao{Ch.~9}: 9.1 (softmax (9.12)); 9.2 (metrics $\bar v_\pi$, $\bar r_\pi$); \textbf{9.3 (Thm 9.1; Thm 9.2 with $\rho_\pi$ (9.19) and its proof in Box 9.3)}; 9.4 (REINFORCE, Alg.~9.1, (9.32)).
+\item \citet{williams1992}: REINFORCE and the first baseline.
+\item \citet{sutton2000}: the policy gradient theorem with function approximation.
+\item \citet{thomas2014} and \citet{nota2020}: almost every implementation, this one included, drops the factor $\gamma^t$ of the theorem. These papers explain what is then being optimised.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item \srcf{A2C.pi}, \src{train_a2c.py}{134}: equation (9.12).
+\item Actor step, \src{train_a2c.py}{180}: the line \texttt{d\_pg = -A (e\_a - pi)} is $\nabla\ln\pi$ of (9.11) written for the logits (report, softmax-score lemma).
+\end{itemize}
+\blk{Report} \S4.1--4.2: objective, and a full proof of the policy gradient theorem through $(I-\gamma P_\pi)^{-1}$, the same route as Box 9.3. Remark ``what is sampled in practice''.
+\blk{Check yourself} The objective $J(\theta)=\sum_s\mu(s)v_\pi(s)$ is Zhao's $\bar v_\pi^0$ with $d_0=\mu$. Which state distribution does Thm 9.2 put in the expectation, and which one do the samples actually follow?
+\end{phase}
+
+% ===========================================================================
+\begin{phase}{Phase 5 -- Actor-critic: from QAC to A2C}{4 days}
+\blk{Read}
+\begin{itemize}
+\item \zhao{Ch.~10}: \textbf{10.1 (QAC, Alg.~10.1)}; \textbf{10.2.1 (baseline invariance (10.3), optimal baseline (10.5), Box 10.1)}; \textbf{10.2.2 (A2C (10.7)--(10.8), Alg.~10.2)}; skim 10.3--10.4 (off-policy and deterministic actor-critic).
+\item \citet{konda2000}: convergence with two time scales. Compare with \texttt{lr\_actor < lr\_critic} in \srcf{A2C.__init__} \src{train_a2c.py}{119}.
+\item \citet{greensmith2004}: variance reduction and the optimal baseline.
+\item \citet{peters2008}: policy gradients in practice.
+\item Optional, for theory: \citet{bhatnagar2009}, convergence of incremental actor-critic algorithms.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item \srcf{QAC}, \src{train_a2c.py}{205}: Alg.~10.1. The next action $a_{t+1}$ is sampled before the update and then actually played (\src{train_a2c.py}{390}), so the Sarsa target is on-policy exactly as in the book.
+\item \srcf{A2C.update}, \src{train_a2c.py}{158}: Alg.~10.2. The docstring follows (10.3) $\to$ (10.7) $\to$ (10.8).
+\end{itemize}
+\blk{Report} \S4.3 (baseline lemma), \S5 (the algorithm as implemented).
+\blk{Experiment E3 (the value of a baseline, \zhao{10.2.1})}
+\cmd{python train_a2c.py --algo qac --updates 8000 --out out_e3_qac}
+\cmd{python train_a2c.py --algo a2c --updates 8000 --out out_e3_a2c}
+In a 1000-update test QAC still died about 28 times per 1000 steps, while A2C was already near 11. Without a baseline each sampled action is weighted by $q(s,a)$, which is mostly negative under fire, so the gradient is noisy.
+\blk{Experiment E4 (Alg.~10.2 as printed, except that it uses Adam)}
+\cmd{python train_a2c.py --nstep 1 --envs 1 --entropy 0 --updates 100000 --out out_e4_book}
+\end{phase}
+
+% ===========================================================================
+\begin{phase}{Phase 6 -- What makes A2C work in practice}{3 days}
+\blk{Read}
+\begin{itemize}
+\item \citet{mnih2016}: A3C/A2C, with $n$-step returns, parallel actors, an entropy bonus and a shared optimiser.
+\item \citet{williams1991}: the entropy bonus. \citet{ahmed2019}: entropy smooths the optimisation landscape; it does more than encourage exploration.
+\item \citet[\S3]{pascanu2013}: gradient clipping by norm.
+\item \citet{andrychowicz2021}: a large study of which implementation choices matter. \citet{huang2022}: implementation details, most of which apply to A2C as well.
+\end{itemize}
+\blk{Code}
+\begin{itemize}
+\item Entropy term \texttt{d\_ent} in \srcf{A2C.update} \src{train_a2c.py}{158} (report, softmax-score and entropy lemma).
+\item Clipping and bias correction in \srcf{Adam.step} \src{train_a2c.py}{85}.
+\item The actor's output layer starts at scale $0.01$ (\src{train_a2c.py}{119}), so the initial policy is close to uniform.
+\end{itemize}
+\blk{Experiment E5 (entropy)}
+\cmd{python train_a2c.py --updates 8000 --entropy 0    --out out_e5_b0}
+\cmd{python train_a2c.py --updates 8000 --entropy 0.02 --out out_e5_b002}
+Watch the entropy column of the log. Without the bonus the policy can become nearly deterministic early, and the smart aliens punish predictable behaviour.
+\end{phase}
+
+% ===========================================================================
+\section{Optional -- Non-stationarity and partial observability}
+\begin{itemize}
+\item \citet{padakandla2021}: survey of RL in environments that change over time.
+\item \citet{dohare2024}: why a network trained for long can stop adapting; compare the forgetting seen during development (\report{\S6.1}).
+\item \citet{singh1994}: memoryless policies in POMDPs, which is exactly the policy class $\pi(a\,|\,\phi(s))$.
+\item \textbf{Experiment E6.} In \srcf{train_a2c.py} set
+\cmd{SCHEDULE = (("fortress", "rain"), ("fortress", "smart"))}
+The hidden phase then switches halfway, and the curves show the drop and recovery that the tracking proposition (\report{\S4.9}) describes. The phase only acts in \srcf{alien_fire.py}, so that is the file to read for what changed.
+\end{itemize}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}
