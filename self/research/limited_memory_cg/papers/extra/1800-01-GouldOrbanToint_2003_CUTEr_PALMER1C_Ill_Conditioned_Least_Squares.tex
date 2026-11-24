@@ -1,10 +1,14 @@
 \documentclass[11pt]{article}
 \usepackage[margin=2.3cm]{geometry}
-\usepackage{amsmath,amssymb,booktabs,multicol}
+\usepackage{amsmath,amssymb,amsthm,booktabs}
 \usepackage[hidelinks]{hyperref}
 
+\newtheorem{lemma}{Lemma}
+
+\newcommand{\R}{\mathbb{R}}
+
 \title{The CUTEst test problem \texttt{PALMER1C}}
-\author{}
+\author{Companion note \texttt{1800-01} to \texttt{1800-HagerZhang\_2013}}
 \date{}
 
 \begin{document}
@@ -12,10 +16,11 @@
 
 \section{Context: CUTE / CUTEst}
 CUTE (\emph{Constrained and Unconstrained Testing Environment}) is a collection of
-optimization test problems and Fortran tools, by Bongartz, Conn, Gould and Toint (1995).
-Its successors are CUTEr and the current CUTEst (Gould, Orban, Toint, 2015).
+optimization test problems and Fortran tools~\cite{BCGT95}.
+Its successors are CUTEr~\cite{GOT03} and the current CUTEst~\cite{GOT15}.
 Each problem is written in the \emph{Standard Input Format} (SIF) and has a
-classification string \texttt{XXXr-XX-n-m}.
+classification string \texttt{XXXr-XX-n-m}. Hager and Zhang use PALMER1C from
+CUTEr as their motivating example~\cite[pp.~2150--2152]{HZ13}.
 
 \section{Origin of \texttt{PALMER1C}}
 \begin{itemize}
@@ -23,23 +28,17 @@ classification string \texttt{XXXr-XX-n-m}.
   \item \textbf{Model:} H--N=N=N, quantum-chemistry level TZVP+MP2. The data are
         energies $y_i$ (kJ/mol) as a function of an angle $x_i$ (radians).
   \item \textbf{Source:} M.~Palmer, Edinburgh, private communication.
-        SIF input by N.~Gould (1990).
+        SIF input by N.~Gould (1990)~\cite{SIF}.
   \item \textbf{Classification:} \texttt{QUR2-RN-8-0}:
-  \begin{itemize}
-    \item \texttt{Q}: quadratic objective;
-    \item \texttt{U}: unconstrained;
-    \item \texttt{R}: regular (smooth);
-    \item \texttt{2}: second derivatives available analytically;
-    \item \texttt{R}: real-world application;
-    \item \texttt{N}: no internal variables;
-    \item \texttt{8}: number of variables $n=8$;
-    \item \texttt{0}: number of constraints $m=0$.
-  \end{itemize}
+        quadratic objective (\texttt{Q}), unconstrained (\texttt{U}),
+        regular (\texttt{R}), second derivatives available (\texttt{2}),
+        real-world application (\texttt{R}), no internal variables (\texttt{N}),
+        $n=8$ variables, $m=0$ constraints.
 \end{itemize}
 
 \section{Mathematical formulation}
-Let $a=(a_0,a_2,a_4,\dots,a_{14})\in\mathbb{R}^8$ be the coefficients of an even
-polynomial of degree 14,
+Let $a=(a_0,a_2,a_4,\dots,a_{14})\in\R^8$ be the coefficients of the even
+polynomial
 \[
   p(x;a)=\sum_{k=0}^{7} a_{2k}\,x^{2k}
         = a_0+a_2x^2+a_4x^4+\cdots+a_{14}x^{14}.
@@ -47,38 +46,46 @@ polynomial of degree 14,
 Given $M=35$ data points $(x_i,y_i)$, the problem is
 \[
   \boxed{\;
-  \min_{a\in\mathbb{R}^8}\; f(a)=\sum_{i=1}^{35}\bigl(p(x_i;a)-y_i\bigr)^2
-  =\sum_{i=1}^{35}\Bigl(\sum_{k=0}^{7}a_{2k}x_i^{2k}-y_i\Bigr)^2 .\;}
+  \min_{a\in\R^8}\; f(a)=\sum_{i=1}^{35}\bigl(p(x_i;a)-y_i\bigr)^2 .\;}
 \]
-All variables are free (no bounds).
+All variables are free.
 
-\paragraph{Matrix form.}
-Define $A\in\mathbb{R}^{35\times 8}$ by $A_{ik}=x_i^{2k}$, $k=0,\dots,7$
-(a Vandermonde matrix in $x_i^2$), and $y\in\mathbb{R}^{35}$. Then
+\paragraph{Notation.} Write $t_i:=x_i^2$. Define $V\in\R^{35\times 8}$ by
+$V_{ik}=t_i^{\,k}$ ($k=0,\dots,7$), a Vandermonde matrix in the nodes $t_i$, so
+that $p(x_i;a)=(Va)_i$ and $f(a)=\|Va-y\|_2^2$. Let
 \[
-  f(a)=\|Aa-y\|_2^2,\qquad
-  \nabla f(a)=2A^{\top}(Aa-y),\qquad
-  \nabla^2 f(a)=2A^{\top}A .
+  A:=V^{\top}V\in\R^{8\times8},\qquad b:=V^{\top}y\in\R^8,\qquad c:=y^{\top}y\in\R .
 \]
-The Hessian is constant. Since $\operatorname{rank}A=8$, $A^\top A\succ 0$:
-$f$ is strictly convex and the unique minimizer solves the normal equations
-\[
-  A^{\top}A\,a^{*}=A^{\top}y .
-\]
+\section{\texorpdfstring{$f$}{f} as a quadratic}
 
-\paragraph{Why it is hard.} The columns $x^{0},x^{2},\dots,x^{14}$ with
-$|x|\le 1.88$ are nearly linearly dependent. Numerically
-$\kappa(A)\approx 1.1\times 10^{6}$, so $\kappa(A^\top A)\approx 1.3\times10^{12}$.
-Methods that depend on the Hessian conditioning (steepest descent, CG without
-preconditioning) converge very slowly.
+\begin{lemma}[Expansion of $f$]\label{lem:exp}
+For every $a\in\R^8$,
+\[
+  f(a)=a^{\top}Aa-2\,b^{\top}a+c .
+\]
+\end{lemma}
+
+\begin{proof}
+Expanding the product,
+\[
+  f(a)=(Va-y)^{\top}(Va-y)=a^{\top}V^{\top}Va-a^{\top}V^{\top}y-y^{\top}Va+y^{\top}y .
+\]
+The number $a^{\top}V^{\top}y$ is a scalar, so it equals its transpose
+$y^{\top}Va$. Hence $f(a)=a^{\top}(V^{\top}V)a-2(V^{\top}y)^{\top}a+y^{\top}y
+=a^{\top}Aa-2b^{\top}a+c$.
+\end{proof}
+
+Therefore $f=2\varphi+c$ with $\varphi(a):=\tfrac12a^{\top}Aa-b^{\top}a$, the
+quadratic to which the paper applies CG~\cite[p.~2152]{HZ13}; $f$ and $\varphi$
+have the same minimizers. The properties of $A$ (symmetry, positive
+definiteness, spectrum, conditioning) are computed in the companion notebook
+\begin{center}\small\texttt{1800-01-GouldOrbanToint\_2003\_PALMER1C\_Quadratic\_Matrix\_Properties.ipynb}\end{center}
 
 \section{Data}
-The 35 data points are taken verbatim from the official CUTEst SIF file
-\texttt{PALMER1C.SIF} (lines \texttt{RE X\emph{i}} and \texttt{RE Y\emph{i}}):
-\begin{center}\url{https://github.com/ralna/SIF/blob/master/PALMER1C.SIF}\end{center}
-The data are symmetric: points $17$--$31$ are the mirror images $-x_i$ of
-points $1$--$15$, and points $34$--$35$ those of $32$--$33$, with the same $y_i$.
-This is consistent with the even model.
+The 35 data points are taken verbatim from the SIF file~\cite{SIF}
+(lines \texttt{RE X\emph{i}} and \texttt{RE Y\emph{i}}).
+Points $17$--$31$ are the mirror images $-x_i$ of points $1$--$15$, and points
+$34$--$35$ those of $32$--$33$, with the same $y_i$; this fits the even model.
 
 \begin{center}
 \small
@@ -104,12 +111,11 @@ $i$ & $x_i$ & $y_i$ & $i$ & $x_i$ & $y_i$ & $i$ & $x_i$ & $y_i$\\
 
 \section{Starting point and solution}
 \begin{itemize}
-  \item \textbf{Starting point:} $a^{(0)}=(1,1,\dots,1)^\top$, with
+  \item \textbf{Starting point:} $a^{(0)}=(1,\dots,1)^\top$, with
         $f(a^{(0)})\approx 3.453\times 10^{8}$.
-  \item \textbf{Lower bound:} $f\ge 0$ (least squares).
-  \item \textbf{Optimal value:} the SIF file reports $f^*\approx 9.7605048\times10^{-2}$.
-        Solving the normal equations (QR / SVD) gives $f^*\approx 9.75980\times10^{-2}$.
-  \item \textbf{Minimizer} (computed by SVD-based least squares):
+  \item \textbf{Optimal value:} the SIF file reports $f^*\approx 9.7605048\times10^{-2}$;
+        a least-squares solve (QR/SVD) gives $f^*\approx 9.75980\times10^{-2}$.
+  \item \textbf{Minimizer} (SVD-based least squares):
 \end{itemize}
 \[
 \begin{array}{llll}
@@ -117,21 +123,21 @@ a_0^*\approx 88.29718, & a_2^*\approx -164.38402, & a_4^*\approx 146.05981, & a_
 a_8^*\approx 55.92619, & a_{10}^*\approx -17.83897, & a_{12}^*\approx 3.04227, & a_{14}^*\approx -0.21407.
 \end{array}
 \]
-The large, alternating coefficients are another sign of ill-conditioning.
 
-\section*{References}
-\begin{itemize}
-  \item I.~Bongartz, A.~R.~Conn, N.~I.~M.~Gould, Ph.~L.~Toint,
-        CUTE: Constrained and Unconstrained Testing Environment,
-        \emph{ACM Trans.\ Math.\ Software} 21(1):123--160, 1995.
-  \item N.~I.~M.~Gould, D.~Orban, Ph.~L.~Toint, CUTEr and SifDec: A Constrained and
-        Unconstrained Testing Environment, Revisited,
-        \emph{ACM Trans.\ Math.\ Software} 29(4):373--394, 2003.
-  \item N.~I.~M.~Gould, D.~Orban, Ph.~L.~Toint, CUTEst: a Constrained and
-        Unconstrained Testing Environment with safe threads for mathematical
-        optimization, \emph{Comput.\ Optim.\ Appl.} 60:545--557, 2015.
-  \item SIF file \texttt{PALMER1C.SIF},
-        \url{https://github.com/ralna/SIF/blob/master/PALMER1C.SIF}.
-\end{itemize}
+\begin{thebibliography}{9}
+\bibitem{HZ13} W.~W.~Hager and H.~Zhang, The limited memory conjugate gradient
+  method, \emph{SIAM J. Optim.}, 23 (2013), pp.~2150--2168.
+\bibitem{BCGT95} I.~Bongartz, A.~R.~Conn, N.~I.~M.~Gould, Ph.~L.~Toint,
+  CUTE: Constrained and Unconstrained Testing Environment,
+  \emph{ACM Trans.\ Math.\ Software}, 21 (1995), pp.~123--160.
+\bibitem{GOT03} N.~I.~M.~Gould, D.~Orban, Ph.~L.~Toint, CUTEr and SifDec: A
+  Constrained and Unconstrained Testing Environment, Revisited,
+  \emph{ACM Trans.\ Math.\ Software}, 29 (2003), pp.~373--394.
+\bibitem{GOT15} N.~I.~M.~Gould, D.~Orban, Ph.~L.~Toint, CUTEst: a Constrained and
+  Unconstrained Testing Environment with safe threads for mathematical
+  optimization, \emph{Comput.\ Optim.\ Appl.}, 60 (2015), pp.~545--557.
+\bibitem{SIF} SIF file \texttt{PALMER1C.SIF},
+  \url{https://github.com/ralna/SIF/blob/master/PALMER1C.SIF}.
+\end{thebibliography}
 
 \end{document}

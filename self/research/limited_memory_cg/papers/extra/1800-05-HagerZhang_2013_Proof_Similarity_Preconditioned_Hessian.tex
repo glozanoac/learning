@@ -1,0 +1,167 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem{example}{Example}
+
+\newcommand{\R}{\mathbb{R}}
+
+\title{Similarity of $U^{\top}\nabla^2 f(x)\,U$ and $\nabla^2 f(x)\,UU^{\top}$}
+\author{Companion note \texttt{1800-05} to \texttt{1800-HagerZhang\_2013}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{The assertion}
+
+In \S2 of~\cite[p.~2154]{HZ13} the change of variables $x=Uy$, with
+$U\in\R^{n\times n}$ nonsingular, gives the Hessian
+$\nabla_y^2 f(Uy)=U^{\top}\nabla^2 f(x)U$. The paper then states:
+\begin{quote}
+\emph{Since $U^{\top}\nabla^2 f(x)U$ is similar to $\nabla^2 f(x)UU^{\top}$,
+the product $UU^{\top}$ is usually chosen to approximate the inverse Hessian.}
+\end{quote}
+Throughout, write $A:=\nabla^2 f(x)\in\R^{n\times n}$ (symmetric) and
+$P:=UU^{\top}$ (the preconditioner). We prove the claim (Theorem~\ref{thm:main}),
+give the consequence the paper uses (Corollary~\ref{cor:goal}), and check what
+remains true when $U$ is singular, since the paper later allows a positive
+\emph{semidefinite} $P_k$ (Theorem~\ref{thm:psd}, Example~\ref{ex:counter}).
+
+Recall that $B,C\in\R^{n\times n}$ are \emph{similar} if $C=S^{-1}BS$ for some
+nonsingular $S$. Similar matrices have the same characteristic polynomial, hence
+the same eigenvalues with the same algebraic multiplicities.
+
+\section{Nonsingular $U$: the paper's claim}
+
+\begin{theorem}\label{thm:main}
+Let $A\in\R^{n\times n}$ be arbitrary and $U\in\R^{n\times n}$ nonsingular. Then
+\[
+U^{\top}AU=S^{-1}\,(AUU^{\top})\,S,\qquad S:=U^{-\top}=(U^{\top})^{-1}.
+\]
+Hence $U^{\top}AU$ and $AUU^{\top}$ are similar.
+\end{theorem}
+
+\begin{proof}
+$U^{\top}$ is nonsingular because $\det U^{\top}=\det U\ne0$, and
+$(U^{\top})^{-1}=(U^{-1})^{\top}$. With $S=(U^{\top})^{-1}$ we have $S^{-1}=U^{\top}$, so
+\[
+S^{-1}(AUU^{\top})S=U^{\top}AU\,\bigl(U^{\top}(U^{\top})^{-1}\bigr)=U^{\top}AU\,I=U^{\top}AU .
+\qedhere
+\]
+\end{proof}
+
+Neither symmetry of $A$ nor any definiteness is used: the identity is the
+special case $X=U^{\top}$, $Y=AU$ of ``$XY$ is similar to $YX$ when $X$ is
+nonsingular'' ($YX=X^{-1}(XY)X$).
+
+\begin{corollary}[Why $P\approx A^{-1}$]\label{cor:goal}
+Under the hypotheses of Theorem~\ref{thm:main}:
+\begin{enumerate}
+\item[(a)] $U^{\top}AU$ and $AP$ have the same eigenvalues, with the same
+  multiplicities;
+\item[(b)] $U^{\top}AU=cI$ for some $c\in\R$ if and only if $AP=cI$; in
+  particular, for nonsingular $A$, $U^{\top}AU=I\iff P=A^{-1}$.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+(a) Similar matrices share the characteristic polynomial.
+(b) $U^{\top}AU=cI\iff AP=S(cI)S^{-1}=cI$ by Theorem~\ref{thm:main}. With $c=1$
+and $A$ nonsingular, $AP=I\iff P=A^{-1}$.
+\end{proof}
+
+So the paper's goal, ``eigenvalues of $U^{\top}AU$ roughly equal'', can be
+read off the product $AP$, which involves $U$ only through $P=UU^{\top}$; the
+ideal case of all eigenvalues equal to~$1$ is exactly $P=A^{-1}$. This is the
+reason $P$, not $U$, is what the algorithm approximates and what appears in
+(2.5)--(2.8) of~\cite{HZ13}.
+
+\begin{remark}
+$AP$ is generally \emph{not} symmetric, while $U^{\top}AU$ is. Theorem~\ref{thm:main}
+nevertheless shows that $AP$ is diagonalizable with real eigenvalues (being
+similar to a symmetric matrix), and if $A\succ0$ these are positive, since
+$v^{\top}U^{\top}AUv=(Uv)^{\top}A(Uv)>0$ for $v\ne0$.
+\end{remark}
+
+\section{Singular $U$ (positive semidefinite $P$)}
+
+The paper later uses a symmetric positive semidefinite $P_k$ in (2.7). Any such
+$P$ can be written $P=UU^{\top}$ (e.g.\ $U=P^{1/2}$), but $U$ may be singular and
+Theorem~\ref{thm:main} no longer applies. The following facts settle this case.
+
+\begin{lemma}[Same characteristic polynomial]\label{lem:charpoly}
+For any $X,Y\in\R^{n\times n}$, $\det(\lambda I-XY)=\det(\lambda I-YX)$ for all
+$\lambda\in\mathbb C$.
+\end{lemma}
+
+\begin{proof}
+Let $M=\begin{pmatrix}\lambda I & X\\ Y & I\end{pmatrix}$. The Schur complement of
+the lower-right block gives $\det M=\det(I)\det(\lambda I-XY)$. For $\lambda\ne0$,
+the Schur complement of the upper-left block gives
+$\det M=\det(\lambda I)\det(I-\lambda^{-1}YX)=\det(\lambda I-YX)$. The two
+polynomials in $\lambda$ agree for every $\lambda\ne0$, hence everywhere.
+\end{proof}
+
+With $X=U^{\top}$, $Y=AU$, Lemma~\ref{lem:charpoly} shows that
+$U^{\top}AU$ and $AP$ \emph{always} have the same eigenvalues with
+multiplicities. Equal spectra do not imply similarity in general:
+
+\begin{example}[Not similar: $A$ indefinite, $U$ singular]\label{ex:counter}
+Take $A=\begin{pmatrix}0&1\\1&0\end{pmatrix}$ (symmetric) and
+$U=\begin{pmatrix}1&0\\0&0\end{pmatrix}$, so $P=UU^{\top}=U$. Then
+\[
+U^{\top}AU=\begin{pmatrix}0&0\\0&0\end{pmatrix},\qquad
+AP=\begin{pmatrix}0&0\\1&0\end{pmatrix}.
+\]
+Both have spectrum $\{0,0\}$, but the zero matrix is similar only to itself,
+so they are not similar.
+\end{example}
+
+In optimization, however, the relevant case is a positive definite Hessian, and
+there similarity survives.
+
+\begin{theorem}\label{thm:psd}
+Let $A\succ0$ and let $U\in\R^{n\times n}$ be arbitrary (possibly singular),
+$P=UU^{\top}$. Then $U^{\top}AU$ and $AP$ are similar.
+\end{theorem}
+
+\begin{proof}
+Let $A^{1/2}\succ0$ be the symmetric square root of $A$. Then
+\[
+AP=A^{1/2}\bigl(A^{1/2}PA^{1/2}\bigr)A^{-1/2},
+\]
+so $AP$ is similar to the symmetric matrix $B:=A^{1/2}PA^{1/2}$. By the
+spectral theorem, $B$ is orthogonally similar to the diagonal matrix
+$D$ of its eigenvalues, so $AP$ is similar to $D$. Likewise $C:=U^{\top}AU$ is
+symmetric and is similar to the diagonal matrix $D'$ of its eigenvalues. By
+Lemma~\ref{lem:charpoly}, $C$ and $AP$ have the same eigenvalues with the same
+multiplicities, so after reordering $D'=\Pi^{\top}D\Pi$ for a permutation
+matrix $\Pi$. Similarity is an equivalence relation, so
+$C\sim D'\sim D\sim AP$.
+\end{proof}
+
+\begin{remark}[Assessment]
+The paper's sentence is correct as stated, because $U$ is assumed nonsingular
+there; the proof is one line (Theorem~\ref{thm:main}) and uses no property of
+the Hessian. For the semidefinite preconditioners $P_k$ of (2.7) and \S4, the
+eigenvalue statement still holds unconditionally (Lemma~\ref{lem:charpoly}),
+and full similarity holds whenever $\nabla^2f(x)\succ0$ (Theorem~\ref{thm:psd}).
+Only for an indefinite Hessian together with a singular $U$ can similarity fail
+(Example~\ref{ex:counter}); this does not affect the paper's use of the claim,
+which concerns eigenvalues only.
+\end{remark}
+
+\begin{thebibliography}{9}
+\bibitem{HZ13} W.~W.~Hager and H.~Zhang, The limited memory conjugate gradient
+method, \emph{SIAM J. Optim.}, 23 (2013), pp.~2150--2168.
+\end{thebibliography}
+
+\end{document}

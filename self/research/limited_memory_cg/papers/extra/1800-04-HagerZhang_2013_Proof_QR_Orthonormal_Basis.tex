@@ -1,0 +1,129 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\spn}{\operatorname{span}}
+
+\title{QR factorization and orthonormal bases of the column spans}
+\author{Companion note \texttt{1800-04} to \texttt{1800-HagerZhang\_2013}\\
+(proof for the numerical checks in notebook \texttt{1800-04})}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{What is used}
+
+The paper describes the subspace $\mathcal S_k$ through ``a matrix $Z$ whose
+columns are an orthonormal basis'', obtained from the factorization $S=ZR$ of
+the matrix $S$ of search directions~\cite[p.~2163]{HZ13}. Notebook
+\texttt{1800-04} checks numerically that \texttt{np.linalg.qr} gives such a
+basis. This note proves it.
+
+\section{Setting}
+
+Let $A=[a_1\ \cdots\ a_n]\in\R^{m\times n}$ and let $A=QR$, where
+$Q=[q_1\ \cdots\ q_p]\in\R^{m\times p}$ has orthonormal columns
+($q_i^{\top}q_j=\delta_{ij}$) and $R=(r_{ij})\in\R^{p\times n}$ is upper
+triangular ($r_{ij}=0$ for $i>j$). This covers the full QR ($p=m$) and the
+reduced QR ($p=n$, the default of \texttt{np.linalg.qr}).
+
+\section{Result}
+
+\begin{lemma}[Orthonormal vectors are independent]\label{lem:indep}
+If $q_1,\dots,q_k$ are orthonormal, they are linearly independent, so
+$\dim\spn\{q_1,\dots,q_k\}=k$.
+\end{lemma}
+
+\begin{proof}
+Let $\sum_{i=1}^k c_iq_i=0$. Multiplying by $q_j^{\top}$ and using
+$q_j^{\top}q_i=\delta_{ij}$ gives $c_j=0$ for every $j$.
+\end{proof}
+
+\begin{lemma}[Triangular structure]\label{lem:tri}
+For every $j=1,\dots,n$,
+\[
+a_j=\sum_{i=1}^{\min\{j,p\}} r_{ij}\,q_i .
+\]
+In particular, column $j$ of $A$ depends only on the first $j$ columns of $Q$.
+\end{lemma}
+
+\begin{proof}
+Column $j$ of $A=QR$ is $a_j=Q\,(\text{column $j$ of $R$})=\sum_{i=1}^{p}r_{ij}q_i$.
+Since $R$ is upper triangular, $r_{ij}=0$ for $i>j$, so only the terms
+$i\le\min\{j,p\}$ remain.
+\end{proof}
+
+\begin{lemma}[Nonzero diagonal]\label{lem:diag}
+If $a_1,\dots,a_n$ are linearly independent, then $n\le p$ and
+$r_{kk}\ne0$ for $k=1,\dots,n$.
+\end{lemma}
+
+\begin{proof}
+\emph{$n\le p$.} By Lemma~\ref{lem:tri}, all $a_j$ lie in
+$\spn\{q_1,\dots,q_p\}$, which has dimension $p$ (Lemma~\ref{lem:indep}).
+A space of dimension $p$ contains at most $p$ independent vectors, so $n\le p$.
+
+\emph{$r_{kk}\ne0$.} Suppose $r_{kk}=0$ for some $k\le n$. By
+Lemma~\ref{lem:tri}, $a_j\in\spn\{q_1,\dots,q_j\}\subseteq\spn\{q_1,\dots,q_{k-1}\}$
+for $j<k$, and $a_k=\sum_{i=1}^{k-1}r_{ik}q_i\in\spn\{q_1,\dots,q_{k-1}\}$
+because $r_{kk}=0$. So the $k$ independent vectors $a_1,\dots,a_k$ lie in a
+space of dimension $k-1$ (Lemma~\ref{lem:indep}). This is impossible.
+\end{proof}
+
+\begin{theorem}\label{thm}
+Let $a_1,\dots,a_n$ be linearly independent and $A=QR$ as above. Then for every
+$k=1,\dots,n$,
+\[
+\spn\{q_1,\dots,q_k\}=\spn\{a_1,\dots,a_k\},
+\]
+and $q_1,\dots,q_k$ is an orthonormal basis of this space.
+\end{theorem}
+
+\begin{proof}
+Fix $k\le n$; then $k\le p$ by Lemma~\ref{lem:diag}. Write
+$U_k=\spn\{a_1,\dots,a_k\}$ and $V_k=\spn\{q_1,\dots,q_k\}$.
+
+\emph{$U_k\subseteq V_k$.} For $j\le k$, Lemma~\ref{lem:tri} gives
+$a_j\in\spn\{q_1,\dots,q_j\}\subseteq V_k$. A span of vectors in the subspace
+$V_k$ stays in $V_k$.
+
+\emph{$V_k\subseteq U_k$, by induction on $k$.} For $k=1$:
+$a_1=r_{11}q_1$ with $r_{11}\ne0$ (Lemma~\ref{lem:diag}), so
+$q_1=a_1/r_{11}\in U_1$. For $k>1$, assume $V_{k-1}\subseteq U_{k-1}$. By
+Lemma~\ref{lem:tri} and $r_{kk}\ne0$,
+\[
+q_k=\frac1{r_{kk}}\Bigl(a_k-\sum_{i=1}^{k-1}r_{ik}q_i\Bigr).
+\]
+Here $a_k\in U_k$, and each $q_i$ with $i<k$ lies in $V_{k-1}\subseteq
+U_{k-1}\subseteq U_k$. So $q_k\in U_k$. Together with $q_1,\dots,q_{k-1}\in
+U_{k-1}\subseteq U_k$, this gives $V_k\subseteq U_k$.
+
+\emph{Basis.} $q_1,\dots,q_k$ span $V_k=U_k$, are orthonormal by assumption, and are
+linearly independent by Lemma~\ref{lem:indep}.
+\end{proof}
+
+\begin{corollary}[Column space]\label{cor}
+With $k=n$: the first $n$ columns of $Q$ form an orthonormal basis of the
+column space $\spn\{a_1,\dots,a_n\}$ of $A$. For the reduced QR ($p=n$) these are
+all the columns of $Q$, so $\operatorname{range}(Q)=\operatorname{range}(A)$.
+\end{corollary}
+
+For \texttt{Q, R = np.linalg.qr(D)} with $D=[d_{k-1}\ \cdots\ d_{k-m_k}]$ of
+full column rank, Corollary~\ref{cor} gives exactly the $Z$ used for
+$\rho_k$ in note \texttt{1800-02}. If the columns are dependent,
+Lemma~\ref{lem:diag} fails ($r_{kk}=0$ for some $k$) and $q_k$ need not lie in
+the span; notebook \texttt{1800-04}, \S4, shows this case.
+
+\begin{thebibliography}{9}
+\bibitem{HZ13} W.~W.~Hager and H.~Zhang, The limited memory conjugate gradient
+method, \emph{SIAM J. Optim.}, 23 (2013), pp.~2150--2168.
+\end{thebibliography}
+
+\end{document}
